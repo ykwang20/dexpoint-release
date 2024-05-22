@@ -3,8 +3,8 @@ from time import time
 
 import numpy as np
 
-from dexpoint.env.rl_env.relocate_env import AllegroRelocateRLEnv
-from dexpoint.real_world import task_setting
+from dexpoint2.env.rl_env.relocate_env import AllegroRelocateRLEnv
+from dexpoint2.real_world import task_setting
 
 from simple_pc import SimplePointCloud
 import time as t

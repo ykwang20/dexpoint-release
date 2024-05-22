@@ -8,12 +8,12 @@ import numpy as np
 import time
 
 import argparse
-from dexpoint.env.rl_env.relocate_env import AllegroRelocateRLEnv
-from dexpoint.real_world import task_setting
-from stable_baselines_dexpoint.common.torch_layers import PointNetImaginationExtractorGP
-from stable_baselines_dexpoint.common.vec_env.subproc_vec_env import SubprocVecEnv
-from stable_baselines_dexpoint.ppo import PPO
-from stable_baselines_dexpoint.simple_callback import SimpleCallback
+from dexpoint2.env.rl_env.relocate_env import AllegroRelocateRLEnv
+from dexpoint2.real_world import task_setting
+from stable_baselines_dexpoint2.common.torch_layers import PointNetImaginationExtractorGP
+from stable_baselines_dexpoint2.common.vec_env.subproc_vec_env import SubprocVecEnv
+from stable_baselines_dexpoint2.ppo import PPO
+from stable_baselines_dexpoint2.simple_callback import SimpleCallback
 import torch
 
 BASE_DIR = os.path.abspath((os.path.join(os.path.dirname(__file__), '..')))

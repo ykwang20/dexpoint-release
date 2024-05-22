@@ -5,10 +5,10 @@ import numpy as np
 import time
 
 import argparse
-from dexpoint.env.rl_env.relocate_env import AllegroRelocateRLEnv
-from dexpoint.real_world import task_setting
-from stable_baselines_dexpoint.common.torch_layers import PointNetImaginationExtractorGP
-from stable_baselines_dexpoint.ppo import PPO
+from dexpoint2.env.rl_env.relocate_env import AllegroRelocateRLEnv
+from dexpoint2.real_world import task_setting
+from stable_baselines_dexpoint2.common.torch_layers import PointNetImaginationExtractorGP
+from stable_baselines_dexpoint2.ppo import PPO
 
 from simple_pc import SimplePointCloud
 
