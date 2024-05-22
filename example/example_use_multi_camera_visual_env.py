@@ -4,7 +4,7 @@ import imageio
 import numpy as np
 from PIL import ImageColor
 
-from dexpoint.env.rl_env.relocate_env import AllegroRelocateRLEnv
+from dexpoint2.env.rl_env.relocate_env import AllegroRelocateRLEnv
 
 if __name__ == '__main__':
     def create_env_fn():

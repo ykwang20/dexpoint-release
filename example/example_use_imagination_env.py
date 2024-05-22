@@ -4,8 +4,8 @@ from time import time
 import numpy as np
 import open3d as o3d
 
-from dexpoint.env.rl_env.relocate_env import AllegroRelocateRLEnv
-from dexpoint.real_world import task_setting
+from dexpoint2.env.rl_env.relocate_env import AllegroRelocateRLEnv
+from dexpoint2.real_world import task_setting
 
 if __name__ == '__main__':
     def create_env_fn():
