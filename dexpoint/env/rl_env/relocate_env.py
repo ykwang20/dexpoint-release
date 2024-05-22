@@ -49,8 +49,10 @@ class AllegroRelocateRLEnv(LabRelocateEnv, BaseRLEnv):
                                      finger_contact_link_name]
         self.finger_contact_ids = np.array([0] * 3 + [1] * 4 + [2] * 4 + [3] * 4 + [4])
         self.finger_tip_pos = np.zeros([len(finger_tip_names), 3])
+
         self.finger_reward_scale = np.ones(len(self.finger_tip_links)) * 0.02
-        # self.finger_reward_scale[0] = 0.1
+        # self.finger_reward_scale = np.ones(len(self.finger_tip_links)) * 0.01
+        # self.finger_reward_scale[0] = 0.04
 
         # Object, palm, target pose
         self.object_pose = self.manipulated_object.get_pose()
@@ -197,14 +199,13 @@ class AllegroRelocateRLEnv(LabRelocateEnv, BaseRLEnv):
         if self.print_is:
             print(info)
         return info
-
     def reward_hand_action(self, action):
         reward = 0.0
         hand_action = self.hand_action
         # hand_other = self.hand_other
         if np.sum(self.robot_object_contact) < 10 :
             hand_action = np.clip(hand_action, 0, 0.5)
-            if self.palm_in_object_val < 0. :
+            if self.palm_in_object_val < 0.10:
                 reward += 0.5 * (np.sum(hand_action) - np.sum(hand_action[6:9]))
                 reward = np.clip(reward, 0, 5)
                 if hand_action[9] < 1 :
@@ -222,6 +223,7 @@ class AllegroRelocateRLEnv(LabRelocateEnv, BaseRLEnv):
                 # reward -= 0.5 * np.sum(np.abs(self.hand_other))
                 reward = np.clip(reward, -10, 0)
         # action
+        # reward = 0.0
         self.reward_hand_action_val = reward
         return reward
     
@@ -250,6 +252,7 @@ class AllegroRelocateRLEnv(LabRelocateEnv, BaseRLEnv):
             reward = np.sum(1.0 / (0.01 + self.palm_in_object_val) * 0.05)
             if self.print_is:
                 print("palm_in_object:", self.palm_in_object_val)
+        # reward = 0.0
         self.reward_palm_object_dis_val = reward
         return reward
 
@@ -285,6 +288,7 @@ class AllegroRelocateRLEnv(LabRelocateEnv, BaseRLEnv):
         reward += (self.cartesian_error ** 2) * -1e3
         self.reward_other_val = reward
         return reward
+
 
     def is_done(self):
         if  np.linalg.norm(self.target_in_object) < 0.04 or self.object_lift < OBJECT_LIFT_LOWER_LIMIT or (self.object_move >0.04 and self.object_lift < 0.02):

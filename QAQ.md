@@ -14,7 +14,7 @@ mamba activate openpoints
 
 swanlab watch -l ./logs
 
-CUDA_VISIBLE_DEVICES=1 python example/train.py --n 100 --workers 30 --iter 600 --lr 0.0003 --bs 500
+CUDA_VISIBLE_DEVICES=1 python example/train.py --n 100 --workers 3 --iter 600 --lr 0.0003 --bs 500
 
 watch -n 0.2 nvidia-smi
 
