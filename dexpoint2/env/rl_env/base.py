@@ -84,7 +84,7 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
     @property
     def action_dim(self):
         # return self.robot.dof
-        return 22
+        return 8
 
     @property
     @abstractmethod
@@ -151,8 +151,8 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
 
         # hand_qpos = recover_action(action[6:], self.robot.get_qlimits()[self.arm_dof:])
         #hand_qpos = np.clip(action[6:], self.robot.get_qlimits()[self.arm_dof:][:, 0], self.robot.get_qlimits()[self.arm_dof:][:, 1])
-        hand_qpos=action[6:]
-        #hand_qpos= self.executor.compute_grasp(action[6:])
+        #hand_qpos=action[6:]
+        hand_qpos= self.executor.compute_grasp(action[6:])
         # print("hand_qpos1", hand_qpos)
         # TODO 速度限制
         # allowed_hand_motion = self.velocity_limit[6:] * self.control_time_step

@@ -12,7 +12,7 @@ from stable_baselines_dexpoint2.common.policies import ActorCriticPolicy
 from stable_baselines_dexpoint2.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines_dexpoint2.common.utils import obs_as_tensor, safe_mean
 from stable_baselines_dexpoint2.common.vec_env import VecEnv
-#import swanlab
+import swanlab
 
 
 
@@ -115,11 +115,11 @@ class OnPolicyAlgorithm(BaseAlgorithm):
         if _init_setup_model:
             self._setup_model()
 
-        # self.log_run = swanlab.init(
-        #     experiment_name="dexpoint",
-        #     description="dexpoint实验",
-        #     logdir="./logs"
-        # )
+        self.log_run = swanlab.init(
+            experiment_name="dexpoint",
+            description="dexpoint实验",
+            logdir="./logs"
+        )
 
     def _setup_model(self) -> None:
         self._setup_lr_schedule()
@@ -328,7 +328,7 @@ class OnPolicyAlgorithm(BaseAlgorithm):
                     Dict_log[key] = self.reward_info[key]
                 Dict_log["time/iterations"] = iteration
                 Dict_log["rollout/rollout_rew_mean"] = self.last_rollout_reward
-                #swanlab.log(Dict_log)
+               swanlab.log(Dict_log)
 
             x = time.time()
             self.train()
