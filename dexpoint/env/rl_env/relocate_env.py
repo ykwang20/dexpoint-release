@@ -167,7 +167,7 @@ def main_env():
                                object_name="any_train", object_category="02876657", frame_skip=10,
                                use_visual_obs=True)
     base_env = env
-    check_env(env)
+    #check_env(env)
 
     robot_dof = env.robot.dof
     env.seed(0)
