@@ -52,6 +52,7 @@ if __name__ == '__main__':
     parser.add_argument('--pretrain_path', type=str, default=None)
     parser.add_argument('--save_freq', type=int, default=10)
     parser.add_argument('--save_path', type=str, default=SAVE_DIR)
+    parser.add_argument('--eigen_dim', type=int, default=None)
     args = parser.parse_args()
 
     task_name = args.task_name
@@ -77,6 +78,7 @@ if __name__ == '__main__':
                           object_name=object_name,
                           object_category=object_category,
                           frame_skip=20, 
+                          eigrp_dim=args.eigen_dim,
                           rotation_reward_weight=rotation_reward_weight,
                           randomness_scale=1, 
                           use_visual_obs=use_visual_obs, 

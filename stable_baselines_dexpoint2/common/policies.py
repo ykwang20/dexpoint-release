@@ -604,6 +604,7 @@ class ActorCriticPolicy(BasePolicy):
         :return: Action distribution
         """
         mean_actions = self.action_net(latent_pi)
+        
 
         if isinstance(self.action_dist, DiagGaussianDistribution):
             # print(" self.log_std", self.log_std.exp())

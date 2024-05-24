@@ -28,7 +28,7 @@ def recover_action(action, limit):
 
 
 class BaseRLEnv(BaseSimulationEnv, gym.Env):
-    def __init__(self, use_gui=True, frame_skip=5, use_visual_obs=False, **renderer_kwargs):
+    def __init__(self, use_gui=True, frame_skip=5, use_visual_obs=False,eigen_dim=None, **renderer_kwargs):
         # Do not write any meaningful in this __init__ function other than type definition,
         # Since multiple parents are presented for the child RLEnv class
         super().__init__(use_gui=use_gui, frame_skip=frame_skip, use_visual_obs=use_visual_obs, **renderer_kwargs)
@@ -56,8 +56,9 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
         self.ee_link_name = None
         self.ee_link: Optional[sapien.Actor] = None
         self.cartesian_error = None
-
-        self.executor = EigenGrasp(16,7).load_from_file("EigenGrasp/grasp_model.pkl")
+        self.eigen_dim = eigen_dim
+        if eigen_dim is not None:
+            self.executor = EigenGrasp(16,eigen_dim).load_from_file("EigenGrasp/grasp_model_"+str(eigen_dim)+'.pkl')
         
 
     def seed(self, seed=None):
@@ -84,8 +85,10 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
     @property
     def action_dim(self):
         # return self.robot.dof
-        return 13
-
+        if self.eigen_dim is not None:
+            return 6+self.eigen_dim
+        else:
+            return 22
     @property
     @abstractmethod
     def horizon(self):
@@ -132,13 +135,13 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
         ee_link_last_pose = self.ee_link.get_pose()
         # print("ee_link_last_pose", ee_link_last_pose)
         action[:6] = np.clip(action[:6], -1, 1)
-        if self.action_dim == 22:
-            action[6:] = np.clip(action[6:], -1, 1)
+        if self.eigen_dim is not None:
+            hand_qpos= self.executor.compute_grasp(action[6:])
+        else:
             for i in range(16):
                 action[i+6] *= 2
             hand_qpos = np.clip(action[6:], self.robot.get_qlimits()[self.arm_dof:][:, 0], self.robot.get_qlimits()[self.arm_dof:][:, 1])
-        else:
-            hand_qpos= self.executor.compute_grasp(action[6:])
+        
 
         # print("action", action)
         target_root_velocity = recover_action(action[:6], self.velocity_limit[:6])
@@ -390,7 +393,11 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
 
     @cached_property
     def action_space(self):
-        return gym.spaces.Box(low=-1, high=1, shape=(self.action_dim,))
+        lo=np.full(self.action_dim, -1)
+        hi=np.full(self.action_dim, 1)  
+        lo[6:]=-2
+        hi[6:]=2
+        return gym.spaces.Box(low=lo, high=hi, shape=(self.action_dim,))
 
     @cached_property
     def observation_space(self):

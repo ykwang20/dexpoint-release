@@ -34,11 +34,12 @@ def create_env_fn():
     # object_category="YCB"
     object_name = "any_train"
     object_category = "02876657"
-    env_params = dict(robot_name="allegro_hand_xarm7",
+    env_params = dict(robot_name="xarm7_allegro_v2",
                       object_name=object_name,
                       rotation_reward_weight=0,
                       randomness_scale=1,
                       use_visual_obs=True,
+                      eigen_dim=args.eigen_dim,
                       use_gui=True,
                       frame_skip=10,
                       no_rgb=True,
@@ -69,15 +70,16 @@ if __name__ == '__main__':
     parser.add_argument('--task_name', type=str, default="allegro_hand_xarm7")
     parser.add_argument('--extractor_name', type=str, default="smallpn")
     parser.add_argument('--pretrain_path', type=str, default="20240425-1907")
-    parser.add_argument('--model_path', type=str, default="model_230.zip")
+    parser.add_argument('--model_path', type=str, default="model_dex13.zip")
     parser.add_argument('--horizon', type=str, default="200")
+    parser.add_argument('--eigen_dim', type=int, default=2)
     args = parser.parse_args()
 
     task_name = args.task_name
     args.seed = args.seed if args.seed >= 0 else random.randint(0, 100000)
     args.dir = os.path.join(os.path.dirname(__file__), '..')
     args.pretrain_path = os.path.join(
-        args.dir, 'assets/checkpoints/', args.pretrain_path, args.model_path)
+        args.dir, 'assets/checkpoints/',  args.model_path)
 
     env = create_env_fn()
 
@@ -106,6 +108,8 @@ if __name__ == '__main__':
             # time.sleep(2)
 
             action = policy.predict(observation=obs, deterministic=True)[0]
+            print('action space:', env.action_space)
+            print("grasp feat", action[-2:])
             # print("action",action)
             # action[6:0] = action[6:] - [-0.0,-0.78539815,-0.78539815,-0.78539815,-0.0,-0.78539815,-0.78539815 ,-0.78539815 , -0.0,-0.78539815,-0.78539815,-0.78539815,-0.78539815,-0.78539815,-0.78539815,-0.78539815]
 
