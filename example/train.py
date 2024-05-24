@@ -78,7 +78,7 @@ if __name__ == '__main__':
                           object_name=object_name,
                           object_category=object_category,
                           frame_skip=20, 
-                          eigrp_dim=args.eigen_dim,
+                          eigen_dim=args.eigen_dim,
                           rotation_reward_weight=rotation_reward_weight,
                           randomness_scale=1, 
                           use_visual_obs=use_visual_obs, 

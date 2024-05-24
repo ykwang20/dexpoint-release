@@ -28,7 +28,7 @@ def recover_action(action, limit):
 
 
 class BaseRLEnv(BaseSimulationEnv, gym.Env):
-    def __init__(self, use_gui=True, frame_skip=5, use_visual_obs=False,eigen_dim=None, **renderer_kwargs):
+    def __init__(self, use_gui=True, frame_skip=5, use_visual_obs=False, eigen_dim=None, **renderer_kwargs):
         # Do not write any meaningful in this __init__ function other than type definition,
         # Since multiple parents are presented for the child RLEnv class
         super().__init__(use_gui=use_gui, frame_skip=frame_skip, use_visual_obs=use_visual_obs, **renderer_kwargs)
