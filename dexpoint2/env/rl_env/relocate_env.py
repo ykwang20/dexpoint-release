@@ -223,7 +223,7 @@ class AllegroRelocateRLEnv(LabRelocateEnv, BaseRLEnv):
                 # reward -= 0.5 * np.sum(np.abs(self.hand_other))
                 reward = np.clip(reward, -10, 0)
         # action
-        # reward = 0.0
+        reward = 0.0
         self.reward_hand_action_val = reward
         return reward
     

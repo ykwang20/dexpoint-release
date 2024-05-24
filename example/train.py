@@ -102,6 +102,7 @@ if __name__ == '__main__':
                 max_lr=args.lr,
                 adaptive_kl=0.02,
                 target_kl=0.2,
+                tensorboard_log="./logs/dex13/"
                 )
     print('policy net:',model.policy)
     if pretrain_path is not None:
@@ -122,5 +123,6 @@ if __name__ == '__main__':
         total_timesteps=int(env_iter),
         reset_num_timesteps=False,
         iter_start=rollout,
+        tb_log_name=time_now,
         callback=SimpleCallback(model_save_freq=args.save_freq, model_save_path=args.save_path, rollout=0),
     )

@@ -12,7 +12,8 @@ from stable_baselines_dexpoint2.common.policies import ActorCriticPolicy
 from stable_baselines_dexpoint2.common.type_aliases import GymEnv, MaybeCallback, Schedule
 from stable_baselines_dexpoint2.common.utils import obs_as_tensor, safe_mean
 from stable_baselines_dexpoint2.common.vec_env import VecEnv
-import swanlab
+from torch.utils.tensorboard import SummaryWriter
+
 
 
 
@@ -115,11 +116,8 @@ class OnPolicyAlgorithm(BaseAlgorithm):
         if _init_setup_model:
             self._setup_model()
 
-        self.log_run = swanlab.init(
-            experiment_name="dexpoint",
-            description="dexpoint实验",
-            logdir="./logs"
-        )
+        
+
 
     def _setup_model(self) -> None:
         self._setup_lr_schedule()
@@ -314,6 +312,8 @@ class OnPolicyAlgorithm(BaseAlgorithm):
                 fps = int((self.num_timesteps - self._num_timesteps_at_start) / (time.time() - self.start_time))
                 self.logger.record("time/iterations", iteration, exclude="wandb")
                 self.logger.record("rollout/rollout_rew_mean", self.last_rollout_reward)
+                for key in self.reward_info:
+                    self.logger.record("rollout/"+"ep_"+key,self.reward_info[key])
                 if len(self.ep_info_buffer) > 0 and len(self.ep_info_buffer[0]) > 0:
                     self.logger.record("rollout/ep_rew_mean",
                                        safe_mean([ep_info["r"] for ep_info in self.ep_info_buffer]))
@@ -323,12 +323,15 @@ class OnPolicyAlgorithm(BaseAlgorithm):
                 self.logger.record("time/time_elapsed", int(time.time() - self.start_time), exclude="tensorboard")
                 self.logger.record("time/total_timesteps", self.num_timesteps, exclude="tensorboard")
                 self.logger.dump(step=iteration)
-                Dict_log = {}
-                for key in self.reward_info:
-                    Dict_log[key] = self.reward_info[key]
-                Dict_log["time/iterations"] = iteration
-                Dict_log["rollout/rollout_rew_mean"] = self.last_rollout_reward
-               swanlab.log(Dict_log)
+                #Dict_log = {}
+                # for key in self.reward_info:
+                #     #Dict_log[key] = self.reward_info[key]
+                #     self.writer.add_scalar('Episode/' + key, self.reward_info[key], iteration)
+                # self.writer.add_scalar('time/iterations', iteration, iteration)
+                # self.writer.add_scalar('rollout/rollout_rew_mean', self.last_rollout_reward, iteration)
+                # Dict_log["time/iterations"] = iteration
+                # Dict_log["rollout/rollout_rew_mean"] = self.last_rollout_reward
+                #swanlab.log(Dict_log)
 
             x = time.time()
             self.train()

@@ -57,7 +57,7 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
         self.ee_link: Optional[sapien.Actor] = None
         self.cartesian_error = None
 
-        self.executor = EigenGrasp(16,2).load_from_file("EigenGrasp/grasp_model_2.pkl")
+        self.executor = EigenGrasp(16,7).load_from_file("EigenGrasp/grasp_model.pkl")
         
 
     def seed(self, seed=None):
@@ -84,7 +84,7 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
     @property
     def action_dim(self):
         # return self.robot.dof
-        return 8
+        return 13
 
     @property
     @abstractmethod
@@ -132,14 +132,15 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
         ee_link_last_pose = self.ee_link.get_pose()
         # print("ee_link_last_pose", ee_link_last_pose)
         action[:6] = np.clip(action[:6], -1, 1)
-        #action[6:] = np.clip(action[6:], -1, 1)
-        #hand_action_res = [-0.0,-0.78539815,-0.78539815,-0.78539815,-0.0,-0.78539815,-0.78539815 ,-0.78539815 , -0.0,-0.78539815,-0.78539815,-0.78539815,0.2,-0.78539815,-0.0,-0.78539815]
-        # for i in range(16):
-        #      action[i+6] *= 2
-        #     #action[i+6] += hand_action_res[i]
-        
+        if self.action_dim == 22:
+            action[6:] = np.clip(action[6:], -1, 1)
+            for i in range(16):
+                action[i+6] *= 2
+            hand_qpos = np.clip(action[6:], self.robot.get_qlimits()[self.arm_dof:][:, 0], self.robot.get_qlimits()[self.arm_dof:][:, 1])
+        else:
+            hand_qpos= self.executor.compute_grasp(action[6:])
+
         # print("action", action)
-        # action = np.clip(action, -1, 1)
         target_root_velocity = recover_action(action[:6], self.velocity_limit[:6])
         # print("target_root_velocity", target_root_velocity)
         palm_jacobian = self.kinematic_model.compute_end_link_spatial_jacobian(current_qpos[:self.arm_dof])
@@ -150,9 +151,6 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
         # print("arm_qpos", arm_qpos)
 
         # hand_qpos = recover_action(action[6:], self.robot.get_qlimits()[self.arm_dof:])
-        #hand_qpos = np.clip(action[6:], self.robot.get_qlimits()[self.arm_dof:][:, 0], self.robot.get_qlimits()[self.arm_dof:][:, 1])
-        #hand_qpos=action[6:]
-        hand_qpos= self.executor.compute_grasp(action[6:])
         # print("hand_qpos1", hand_qpos)
         # TODO 速度限制
         # allowed_hand_motion = self.velocity_limit[6:] * self.control_time_step
