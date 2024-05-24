@@ -70,7 +70,7 @@ if __name__ == '__main__':
     parser.add_argument('--task_name', type=str, default="allegro_hand_xarm7")
     parser.add_argument('--extractor_name', type=str, default="smallpn")
     parser.add_argument('--pretrain_path', type=str, default="20240425-1907")
-    parser.add_argument('--model_path', type=str, default="model_dex13.zip")
+    parser.add_argument('--model_path', type=str, default="model_dex8.zip")
     parser.add_argument('--horizon', type=str, default="200")
     parser.add_argument('--eigen_dim', type=int, default=2)
     args = parser.parse_args()
@@ -94,6 +94,7 @@ if __name__ == '__main__':
     simple_pc = SimplePointCloud()
 
     while True:
+        print('obs space:', env.observation_space)
         obs = env.reset()
         for j in range(env.horizon):
             if isinstance(obs, dict):
@@ -108,8 +109,6 @@ if __name__ == '__main__':
             # time.sleep(2)
 
             action = policy.predict(observation=obs, deterministic=True)[0]
-            print('action space:', env.action_space)
-            print("grasp feat", action[-2:])
             # print("action",action)
             # action[6:0] = action[6:] - [-0.0,-0.78539815,-0.78539815,-0.78539815,-0.0,-0.78539815,-0.78539815 ,-0.78539815 , -0.0,-0.78539815,-0.78539815,-0.78539815,-0.78539815,-0.78539815,-0.78539815,-0.78539815]
 
