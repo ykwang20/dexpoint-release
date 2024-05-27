@@ -395,8 +395,8 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
     def action_space(self):
         lo=np.full(self.action_dim, -1)
         hi=np.full(self.action_dim, 1)  
-        lo[6:]=-2
-        hi[6:]=2
+        # lo[6:]=-2
+        # hi[6:]=2
         return gym.spaces.Box(low=lo, high=hi, shape=(self.action_dim,))
 
     @cached_property

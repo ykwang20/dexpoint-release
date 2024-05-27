@@ -61,6 +61,7 @@ if __name__ == '__main__':
         #action = np.zeros(env.action_space.shape)
         # action[0] = 0.0  # Moving forward ee link in x-axis
         obs, reward, done, info = env.step(action)
+        
         simple_pc.render(obs,is_imitation=True)
         env.render()
         # t.sleep(5)
