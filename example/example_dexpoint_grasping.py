@@ -56,11 +56,12 @@ if __name__ == '__main__':
     #grasp_action=executor._pca.components_[]
     print('grasp_action:',grasp_action)
     action=np.zeros(22)
-    action[-16:] = grasp_action
+    #action[-16:] = grasp_action
     for i in range(200):
         #action = np.zeros(env.action_space.shape)
         # action[0] = 0.0  # Moving forward ee link in x-axis
         obs, reward, done, info = env.step(action)
+        print('obs.state', obs['state'])
         simple_pc.render(obs,is_imitation=True)
         env.render()
         # t.sleep(5)
