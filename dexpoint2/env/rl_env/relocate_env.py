@@ -70,6 +70,15 @@ class AllegroRelocateRLEnv(LabRelocateEnv, BaseRLEnv):
         # Contact buffer
         self.robot_object_contact = np.zeros(len(finger_tip_names) + 1)  # four tip, palm
 
+        self.reward_info = {
+            "reward_finger_object_dis": 0.0,
+            "reward_hand_action":0.0,
+            "reward_palm_object_dis": 0.0,
+            "reward_contact_and_lift": 0.0,
+            "reward_target_obj_dis": 0.0,
+            "reward_other": 0.0,
+        }
+
     def update_cached_state(self):
         for i, link in enumerate(self.finger_tip_links):
             self.finger_tip_pos[i] = self.finger_tip_links[i].get_pose().p
@@ -141,7 +150,7 @@ class AllegroRelocateRLEnv(LabRelocateEnv, BaseRLEnv):
             self.target_pose.p - self.base_frame_pos,
             self.target_pose.q
         ])
-
+    
     def get_reward(self, action):
         reward = 0.0
         reward += self.reward_palm_object_dis(action)
@@ -150,6 +159,8 @@ class AllegroRelocateRLEnv(LabRelocateEnv, BaseRLEnv):
         reward += self.reward_contact_and_lift(action)
         reward += self.reward_target_obj_dis(action)
         reward += self.reward_other(action)
+
+       
         return reward / 10
 
     def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None):

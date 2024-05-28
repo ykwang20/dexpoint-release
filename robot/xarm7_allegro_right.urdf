@@ -246,14 +246,12 @@
 
 <joint name="gripper_base_joint" type="fixed">
     <!-- <origin rpy="0 0 3.1416" xyz="0.0 0 0.095"/> -->
-    <origin rpy="0 -1.5707963267948966 0.0" xyz="-0.03 0 0.045"/>
+    <origin rpy="0 0 3.1416" xyz="0.0 0 0.121"/>
     <parent link="link7"/>
     <child link="base_link"/>
     <axis xyz="0 0 0"/>
   </joint>
 
-
-  
   <link name="base_link">
     <inertial>
       <mass value="0.4154"/>
@@ -268,13 +266,6 @@
         <color rgba="0.2 0.2 0.2 1"/>
       </material>
       <origin rpy="0 0 0" xyz="0 0 0 "/>
-    </visual>
-    <visual>
-      <origin rpy="0 0 0" xyz="-0.038 0 -0.04"/>
-      <geometry>
-        <box size="0.015 0.085 0.03"/>
-      </geometry>
-      <material name="Grey"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="-0.009300 0 -0.0475"/>
@@ -744,7 +735,7 @@
     <inertial>
       <mass value="0.131691"/>
       <origin xyz="0.039 0 0"/>
-      <inertia ixx="7.04217e-04" iyy="3.95744e-04" izz="6.61125e-04" ixy="-9.64342e-05" ixz="5.8796e-05"
+      <inertia ixx="7.04217e-05" iyy="3.95744e-05" izz="6.61125e-05" ixy="-9.64342e-05" ixz="5.8796e-05"
                iyz="-3.62996e-05"/>
     </inertial>
     <visual>
@@ -826,9 +817,8 @@
   <link name="palm_center">
   </link>
   <joint name="palm_center_joint" type="fixed">
-    <parent link="base_link"/> 
+    <parent link="base_link"/>
     <child link="palm_center"/>
     <origin rpy="0.00000 -0.00000 0.00000" xyz="0 0 -0.03"/>
   </joint>
 </robot>
-

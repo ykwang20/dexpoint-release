@@ -1,6 +1,7 @@
 import numpy as np
 import open3d as o3d
 
+
 class SimplePointCloud():
     def __init__(self):
         self.vis = o3d.visualization.VisualizerWithKeyCallback()

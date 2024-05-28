@@ -1,4 +1,4 @@
-from dexpoint2.env.rl_env.pc_processing import process_relocate_pc, add_gaussian_noise, process_relocate_pc_noise
+from dexpoint2.env.rl_env.pc_processing import process_relocate_pc, add_gaussian_noise, process_relocate_pc_noise, process_relocate_pc_noise_double
 from dexpoint2.real_world import lab
 import numpy as np
 
@@ -6,6 +6,9 @@ import numpy as np
 CAMERA_CONFIG = {
     "relocate": {
         "relocate": dict(pose=lab.ROBOT2BASE * lab.CAM2ROBOT, fov=np.deg2rad(69.4), resolution=(64, 64),
+                         ), },
+    "relocate_double": {
+        "relocate": dict(pose=lab.DOUBLE_CAM2BASE, fov=np.deg2rad(69.4), resolution=(64, 64),
                          ), },
     "viz_only": {  # only for visualization (human), not for visual observation
         "relocate_viz": dict(pose=lab.ROBOT2BASE * lab.CAM2ROBOT, fov=np.deg2rad(69.4), resolution=(640, 480), ),
@@ -21,6 +24,12 @@ OBS_CONFIG = {
     "relocate_noise": {
         "relocate": {
             "point_cloud": {"process_fn": process_relocate_pc_noise, "num_points": 512, "pose_perturb_level": 0.5,
+                            "process_fn_kwargs": {"noise_level": 0.5}},
+        },
+    },
+    "relocate_noise_double": {
+        "relocate": {
+            "point_cloud": {"process_fn": process_relocate_pc_noise_double, "num_points": 1024, "pose_perturb_level": 0.5,
                             "process_fn_kwargs": {"noise_level": 0.5}},
         },
     }

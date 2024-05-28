@@ -5,6 +5,8 @@ import numpy as np
 
 from dexpoint2.env.rl_env.relocate_env import AllegroRelocateRLEnv
 from dexpoint2.real_world import task_setting
+from dexpoint2.env.rl_env.double_arm_env import DoubleAllegroRelocateRLEnv
+
 
 from simple_pc import SimplePointCloud
 import time as t
@@ -24,13 +26,13 @@ if __name__ == '__main__':
         # based on "CUDA_VISIBLE_DEVICES".
         if "CUDA_VISIBLE_DEVICES" in os.environ:
             env_params["device"] = "cuda"
-        environment = AllegroRelocateRLEnv(**env_params)
+        environment = DoubleAllegroRelocateRLEnv(**env_params)
 
         # Create camera
-        environment.setup_camera_from_config(task_setting.CAMERA_CONFIG["relocate"])
+        environment.setup_camera_from_config(task_setting.CAMERA_CONFIG["relocate_double"])
 
         # Specify observation
-        environment.setup_visual_obs_config(task_setting.OBS_CONFIG["relocate_noise"])
+        environment.setup_visual_obs_config(task_setting.OBS_CONFIG["relocate_noise_double"])
 
         # Specify imagination
         environment.setup_imagination_config(task_setting.IMG_CONFIG["relocate_robot_only"])
@@ -55,13 +57,18 @@ if __name__ == '__main__':
     grasp_action = executor.compute_grasp(feature)
     #grasp_action=executor._pca.components_[]
     print('grasp_action:',grasp_action)
-    action=np.zeros(22)
-    action[-16:] = grasp_action
+    action=np.zeros(44)
+    #action[-16:] = grasp_action
     for i in range(200):
         #action = np.zeros(env.action_space.shape)
         # action[0] = 0.0  # Moving forward ee link in x-axis
         obs, reward, done, info = env.step(action)
-        
+        print('obs.state', obs['state'])
+        # l_pose = env.l_robot.get_pose()
+        # r_pose = env.r_robot.get_pose()
+        # print("Left robot pose:", l_pose)
+        # print("Right robot pose:", r_pose)
+
         simple_pc.render(obs,is_imitation=True)
         env.render()
         # t.sleep(5)

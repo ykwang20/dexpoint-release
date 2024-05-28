@@ -29,8 +29,16 @@ def generate_free_robot_hand_info() -> Dict[str, FreeRobotInfo]:
     svh_hand_free_info = FreeRobotInfo(path="robot/svh_hand_right.urdf", dof=26, palm_name="right_hand_e1")
     mano_hand_free_info = FreeRobotInfo(path="robot/mano_hand_free.urdf", dof=51, palm_name="palm")
     panda_hand_free_info = FreeRobotInfo(path="robot/panda_hand_free.urdf", dof=8, palm_name="panda_hand")
-
+    allegro_xarm7_right= ArmRobotInfo(path="robot/xarm6_description/xarm7_allegro_right.urdf", hand_dof=16, arm_dof=7,
+                                      palm_name="palm_center", arm_init_qpos=[0, np.pi/8, 0, np.pi/8, np.pi, np.pi/2,-np.pi/2],
+                                      root_offset=[-0.0244, 0, 0])   
+    allegro_xarm7_left=ArmRobotInfo(path="robot/xarm6_description/xarm7_allegro_left.urdf", hand_dof=16, arm_dof=7,
+                                      palm_name="palm_center", arm_init_qpos=[0, np.pi/8, 0, np.pi/8, np.pi, np.pi/2,np.pi/2],
+                                      root_offset=[-0.0244, 0, 0])         
     info_dict = dict(shadow_hand_free=shadow_hand_free_info,
+                     allegro_xarm7_right=allegro_xarm7_right,
+                        allegro_xarm7_left=allegro_xarm7_left,
+
                      allegro_hand_free=allegro_hand_free_info,
                      svh_hand_free=svh_hand_free_info,
                      mano_hand_free=mano_hand_free_info,
@@ -72,10 +80,19 @@ def generate_arm_robot_hand_info() -> Dict[str, ArmRobotInfo]:
         path="robot/xarm6_description/xarm6_allegro_digit_wrist_mounted_rotate.urdf",
         hand_dof=16, arm_dof=6, palm_name="palm_center", arm_init_qpos=[0, 0, 0, np.pi, np.pi / 2, np.pi],
         root_offset=[0.00, 0, 0])
+    allegro_xarm7_right= ArmRobotInfo(path=str(xarm_path / "xarm7_allegro_right.urdf"), hand_dof=16, arm_dof=7,
+                                      palm_name="palm_center", arm_init_qpos=[0, 0, 0, 0,  np.pi , np.pi / 2, np.pi / 2],
+                                      root_offset=[-0.0244, 0, 0])   
+    allegro_xarm7_left=ArmRobotInfo(path=str(xarm_path / "xarm7_allegro_left.urdf"), hand_dof=16, arm_dof=7,
+                                      palm_name="palm_center", arm_init_qpos=[0, 0, 0, 0,  np.pi , np.pi / 2, np.pi / 2],
+                                      root_offset=[-0.0244, 0, 0])         
+    
     info_dict = dict(
         shadow_hand_xarm6=shadow_hand_xarm6,
         allegro_hand_xarm6=allegro_hand_xarm6,
         allegro_hand_xarm7=allegro_hand_xarm7,
+        allegro_xarm7_right=allegro_xarm7_right,
+        allegro_xarm7_left=allegro_xarm7_left,
         xarm7_allegro_v2=xarm7_allegro_v2,
         allegro_hand_xarm6_wrist_mounted_face_down=allegro_hand_xarm6_wrist_mounted_face_down,
         allegro_hand_xarm7_wrist_mounted_face_front=allegro_hand_xarm7_wrist_mounted_face_front,

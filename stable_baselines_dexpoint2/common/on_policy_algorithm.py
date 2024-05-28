@@ -101,14 +101,8 @@ class OnPolicyAlgorithm(BaseAlgorithm):
         self.rollout_buffer = None
 
         self.last_rollout_reward = -np.inf
-        self.reward_info = {
-            "reward_finger_object_dis": 0.0,
-            "reward_hand_action":0.0,
-            "reward_palm_object_dis": 0.0,
-            "reward_contact_and_lift": 0.0,
-            "reward_target_obj_dis": 0.0,
-            "reward_other": 0.0,
-        }
+        self.reward_info=env.get_attr("reward_info")[0]
+        
         self.need_restore = False
         self.last_policy_saved: List[Dict] = [{}, {}]
         self.current_restore_step = 0
