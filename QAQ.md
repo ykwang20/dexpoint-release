@@ -16,6 +16,8 @@ swanlab watch -l ./logs
 
 CUDA_VISIBLE_DEVICES=3 python example/train.py --n 100 --workers 20 --iter 800 --lr 0.0003 --bs 500 --eigen_dim=7
 
+CUDA_VISIBLE_DEVICES=0 python example/train_double.py --n 100 --workers 2 --iter 800 --lr 0.0003 --bs 500 --eigen_dim=2
+
 watch -n 0.2 nvidia-smi
 
 CUDA_VISIBLE_DEVICES=2

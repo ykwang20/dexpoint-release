@@ -246,15 +246,13 @@
 
 <joint name="gripper_base_joint" type="fixed">
     <!-- <origin rpy="0 0 3.1416" xyz="0.0 0 0.095"/> -->
-    <origin rpy="0 -1.5707963267948966 0.0" xyz="-0.03 0 0.045"/>
+    <origin rpy="0 0 3.1416" xyz="0.0 0 0.121"/>
     <parent link="link7"/>
     <child link="base_link"/>
     <axis xyz="0 0 0"/>
   </joint>
 
-
-  
-  <link name="base_link">
+ <link name="base_link">
     <inertial>
       <mass value="0.4154"/>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -262,12 +260,18 @@
     </inertial>
     <visual>
       <geometry>
-        <mesh filename="../allegro_hand_description/meshes/base_link.STL"/>
+        <!-- RIGHT -->
+        <!-- <mesh filename="../allegro_hand_description/meshes/base_link.STL"/> -->
+        <!-- LEFT -->
+        <mesh filename="../allegro_hand_description/meshes/base_link_left.STL"/>
       </geometry>
       <material name="Grey">
         <color rgba="0.2 0.2 0.2 1"/>
       </material>
-      <origin rpy="0 0 0" xyz="0 0 0 "/>
+      <!-- RIGHT -->
+      <!-- <origin rpy="0 0 0" xyz="0 0 0 "/> -->
+      <!-- LEFT -->
+      <origin rpy="-1.5707963259 0 0" xyz="0 0 0 "/>
     </visual>
     <visual>
       <origin rpy="0 0 0" xyz="-0.038 0 -0.04"/>
@@ -311,7 +315,7 @@
     <limit effort="10" lower="-0.47" upper="0.47" velocity="0"/>
     <parent link="base_link"/>
     <child link="link_0.0"/>
-    <origin rpy="-0.08726646255 0 0" xyz="0 0.0435 -0.001542"/>
+    <origin rpy="0.08726646255 0 0" xyz="0 -0.0435 -0.001542"/>
   </joint>
   <link name="link_1.0">
     <inertial>
@@ -367,6 +371,7 @@
     <child link="link_2.0"/>
     <origin xyz="0 0 0.054"/>
   </joint>
+
   <link name="link_3.0">
     <inertial>
       <mass value="0.131691"/>
@@ -571,7 +576,7 @@
     <limit effort="10" lower="-0.47" upper="0.47" velocity="0"/>
     <parent link="base_link"/>
     <child link="link_8.0"/>
-    <origin rpy="0.08726646255 0 0" xyz="0 -0.0435 -0.001542"/>
+    <origin rpy="-0.08726646255 0 0" xyz="0 0.0435 -0.001542"/>
   </joint>
   <link name="link_9.0">
     <inertial>
@@ -687,28 +692,32 @@
     <visual>
       <geometry>
         <!-- RIGHT -->
-        <mesh filename="../allegro_hand_description/meshes/link_12.0_right.STL"/>
+        <!-- <mesh filename="../allegro_hand_description/meshes/link_12.0_right.STL"/> -->
         <!-- LEFT -->
-        <!-- <mesh filename="meshes/link_12.0_left.STL" /> -->
+        <mesh filename="../allegro_hand_description/meshes/link_12.0_left.STL" />
       </geometry>
       <material name="black"/>
+      <origin rpy="3.1415926518 0 0" xyz="0 0 0"/>
     </visual>
     <collision>
       <geometry>
         <box size="0.0358 0.034 0.0455"/>
       </geometry>
       <!-- RIGHT -->
-      <origin rpy="0 0 0" xyz="-0.0179 0.009 0.0145"/>
+      <!-- <origin rpy="0 0 0" xyz="-0.0179 0.009 0.0145"/> -->
       <!-- LEFT -->
-      <!-- <origin rpy="0 0 0" xyz="${-0.0358/2+0.0} ${-.018/2} ${.029/2}"/> -->
+      <origin rpy="0 0 0" xyz="-0.0179 -0.009 0.0145"/>
     </collision>
   </link>
   <joint name="joint_12.0" type="revolute">
-    <axis xyz="-1 0 0"/>
+    <axis xyz="+1 0 0"/>
     <limit effort="10" lower="0.263" upper="1.396" velocity="0"/>
     <parent link="base_link"/>
     <child link="link_12.0"/>
-    <origin rpy="0 -1.65806278845 -1.5707963259" xyz="-0.0182 0.019333 -0.045987"/>
+    <!-- RIGHT -->
+    <!-- <origin rpy="0 -1.65806278845 -1.5707963259" xyz="-0.0182 0.019333 -0.045987"/> -->
+    <!-- LEFT -->
+    <origin rpy="0 -1.65806278845 1.5707963259" xyz="-0.0182 -0.019333 -0.045987"/>
   </joint>
   <link name="link_13.0">
     <inertial>
@@ -731,20 +740,20 @@
     </collision>
   </link>
   <joint name="joint_13.0" type="revolute">
-    <axis xyz="0 0 1"/>
+    <axis xyz="0 0 -1"/>
     <limit effort="10" lower="-0.105" upper="1.163" velocity="0"/>
     <parent link="link_12.0"/>
     <child link="link_13.0"/>
     <!-- RIGHT -->
-    <origin xyz="-0.027 0.005 0.0399"/>
+    <!-- <origin xyz="-0.027 0.005 0.0399"/> -->
     <!-- LEFT -->
-    <!-- <origin xyz="-0.027 -0.005 0.0399"/> -->
+    <origin xyz="-0.027 -0.005 0.0399"/>
   </joint>
   <link name="link_14.0">
     <inertial>
       <mass value="0.131691"/>
       <origin xyz="0.039 0 0"/>
-      <inertia ixx="7.04217e-04" iyy="3.95744e-04" izz="6.61125e-04" ixy="-9.64342e-05" ixz="5.8796e-05"
+      <inertia ixx="7.04217e-05" iyy="3.95744e-05" izz="6.61125e-05" ixy="-9.64342e-05" ixz="5.8796e-05"
                iyz="-3.62996e-05"/>
     </inertial>
     <visual>
@@ -815,7 +824,6 @@
     <origin rpy="0 0 0" xyz="0 0 0.0423"/>
     <!--0.0267000000000005-->
   </joint>
-
   <link name="palm">
   </link>
   <joint name="palm_joint" type="fixed">
@@ -826,9 +834,8 @@
   <link name="palm_center">
   </link>
   <joint name="palm_center_joint" type="fixed">
-    <parent link="base_link"/> 
+    <parent link="base_link"/>
     <child link="palm_center"/>
     <origin rpy="0.00000 -0.00000 0.00000" xyz="0 0 -0.03"/>
   </joint>
 </robot>
-

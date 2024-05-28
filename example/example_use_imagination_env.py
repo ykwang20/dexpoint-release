@@ -5,6 +5,7 @@ import numpy as np
 import open3d as o3d
 
 from dexpoint2.env.rl_env.relocate_env import AllegroRelocateRLEnv
+from dexpoint2.env.rl_env.double_arm_env import DoubleAllegroRelocateRLEnv
 from dexpoint2.real_world import task_setting
 
 if __name__ == '__main__':
@@ -13,7 +14,7 @@ if __name__ == '__main__':
         object_name = np.random.choice(object_names)
         rotation_reward_weight = 0  # whether to match the orientation of the goal pose
         use_visual_obs = True
-        env_params = dict(robot_name="allegro_hand_xarm7",object_name=object_name, rotation_reward_weight=rotation_reward_weight,
+        env_params = dict(robot_name="xarm7_allegro_v2",object_name=object_name, rotation_reward_weight=rotation_reward_weight,
                           randomness_scale=1, use_visual_obs=use_visual_obs, use_gui=True,
                           no_rgb=True)
 
@@ -22,7 +23,7 @@ if __name__ == '__main__':
         # based on "CUDA_VISIBLE_DEVICES".
         if "CUDA_VISIBLE_DEVICES" in os.environ:
             env_params["device"] = "cuda"
-        environment = AllegroRelocateRLEnv(**env_params)
+        environment = DoubleAllegroRelocateRLEnv(**env_params)
 
         # Create camera
         environment.setup_camera_from_config(task_setting.CAMERA_CONFIG["relocate"])
@@ -32,6 +33,8 @@ if __name__ == '__main__':
 
         # Specify imagination
         environment.setup_imagination_config(task_setting.IMG_CONFIG["relocate_goal_robot"])
+        
+
         return environment
 
 
@@ -48,10 +51,14 @@ if __name__ == '__main__':
     print(obs.keys())
 
     tic = time()
-    rl_steps = 100
+    rl_steps = 1000
+    l_pose = env.l_robot.get_pose()
+    r_pose = env.r_robot.get_pose()
+    print("Left robot pose:", l_pose)
+    print("Right robot pose:", r_pose)
     for _ in range(rl_steps):
         action = np.zeros(env.action_space.shape)
-        action[0] = 0.002  # Moving forward ee link in x-axis
+        #action[0] = 0.002  # Moving forward ee link in x-axis
         obs, reward, done, info = env.step(action)
         env.render()
     elapsed_time = time() - tic

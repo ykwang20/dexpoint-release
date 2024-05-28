@@ -246,7 +246,7 @@
 
 <joint name="gripper_base_joint" type="fixed">
     <!-- <origin rpy="0 0 3.1416" xyz="0.0 0 0.095"/> -->
-    <origin rpy="0 0 3.1416" xyz="0.0 0 0.121"/>
+    <origin rpy="3.1415926 -1.5707963267948966 0.0" xyz="0.03 0 0.045"/>
     <parent link="link7"/>
     <child link="base_link"/>
     <axis xyz="0 0 0"/>
@@ -753,7 +753,7 @@
     <inertial>
       <mass value="0.131691"/>
       <origin xyz="0.039 0 0"/>
-      <inertia ixx="7.04217e-05" iyy="3.95744e-05" izz="6.61125e-05" ixy="-9.64342e-05" ixz="5.8796e-05"
+      <inertia ixx="7.04217e-04" iyy="3.95744e-04" izz="6.61125e-05" ixy="-9.64342e-05" ixz="5.8796e-05"
                iyz="-3.62996e-05"/>
     </inertial>
     <visual>

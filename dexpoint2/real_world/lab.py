@@ -23,11 +23,20 @@ DESK2ROBOT_Z_AXIS = 0.00
 
 # Relocate
 RELOCATE_BOUND = [0.1, 0.8, -0.4, 0.4, DESK2ROBOT_Z_AXIS + 0.001, 0.6]
+DOUBLE_RELOCATE_BOUND = [0.2, 0.8, -2, 2, DESK2ROBOT_Z_AXIS + 0.001, 0.6]
 
 # TODO:
 ROBOT2BASE = Pose(p=np.array([0.0, 0., DESK2ROBOT_Z_AXIS]))
 
+DOUBLE_CAM2BASE=Pose(p=np.array([0.6, 0., 0.6]),q=np.array([0.35355339,-0.61237244,-0.61237244, 0.35355339]))
+
+# TODO:
+l_ROBOT2BASE = Pose(p=np.array([-0.37+0.03, 0.4, -DESK2ROBOT_Z_AXIS]))  # Pose(p=np.array([-0.55, 0., -DESK2ROBOT_Z_AXIS]))
+r_ROBOT2BASE = Pose(p=np.array([-0.37+0.03, -0.4, -DESK2ROBOT_Z_AXIS]))  # Pose(p=np.array([-0.55, 0., -DESK2ROBOT_Z_AXIS]))
+
 # Table size
 TABLE_XY_SIZE = np.array([0.6, 1.2])
 TABLE_ORIGIN = np.array([0, -0.15])
+DOUBLE_TABLE_ORIGIN = np.array([0, -0.])
+
 

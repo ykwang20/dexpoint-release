@@ -67,6 +67,39 @@ def process_relocate_pc_noise(cloud: np.ndarray, camera_pose: np.ndarray, num_po
 
     return cloud
 
+def process_relocate_pc_noise_double(cloud: np.ndarray, camera_pose: np.ndarray, num_points: int,
+                              np_random: np.random.RandomState, segmentation=None, noise_level=1) -> np.ndarray:
+    """ pc: nxm, camera_pose: 4x4 """
+    if segmentation is not None:
+        raise NotImplementedError
+
+    pc = cloud[..., :3]
+    pc = pc @ camera_pose[:3, :3].T + camera_pose[:3, 3]
+    bound = lab.DOUBLE_RELOCATE_BOUND
+
+    # remove robot table
+    within_bound_x = (pc[..., 0] > bound[0]) & (pc[..., 0] < bound[1])
+    within_bound_y = (pc[..., 1] > bound[2]) & (pc[..., 1] < bound[3])
+    within_bound_z = (pc[..., 2] > bound[4]) & (pc[..., 2] < bound[5])
+    within_bound = np.nonzero(np.logical_and.reduce((within_bound_x, within_bound_y, within_bound_z)))[0]
+
+    num_index = len(within_bound)
+    if num_index == 0:
+        return np.zeros([num_points, 3])
+    if num_index < num_points:
+        indices = np.concatenate([within_bound, np.ones(num_points - num_index, dtype=np.int32) * within_bound[0]])
+        multiplicative_noise = 1 + np_random.randn(num_index)[:, None] * 0.01 * noise_level  # (num_index, 1)
+        multiplicative_noise = np.concatenate(
+            [multiplicative_noise, np.ones([num_points - num_index, 1]) * multiplicative_noise[0]], axis=0)
+    else:
+        indices = within_bound[np_random.permutation(num_index)[:num_points]]
+        multiplicative_noise = 1 + np_random.randn(num_points)[:, None] * 0.01 * noise_level  # (n, 1)
+
+    processed_pc = pc[indices, :] * multiplicative_noise
+    cloud = np.concatenate([processed_pc, cloud[indices, 3:]], axis=1)
+
+    return cloud
+
 
 def add_gaussian_noise(cloud: np.ndarray, np_random: np.random.RandomState, noise_level=1):
     # cloud is (n, 3)

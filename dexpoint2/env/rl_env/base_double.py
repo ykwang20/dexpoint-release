@@ -16,7 +16,6 @@ from dexpoint2.utils.random_utils import np_random
 from EigenGrasp.eigengrasp import EigenGrasp
 
 
-
 VISUAL_OBS_RETURN_TORCH = False
 MAX_DEPTH_RANGE = 2.5
 gl2sapien = sapien.Pose(q=np.array([0.5, 0.5, -0.5, -0.5]))
@@ -27,8 +26,8 @@ def recover_action(action, limit):
     return action
 
 
-class BaseRLEnv(BaseSimulationEnv, gym.Env):
-    def __init__(self, use_gui=True, frame_skip=5, use_visual_obs=False, eigen_dim=None, **renderer_kwargs):
+class BaseDoubleRLEnv(BaseSimulationEnv, gym.Env):
+    def __init__(self, use_gui=True, frame_skip=5, use_visual_obs=False,eigen_dim=None, **renderer_kwargs):
         # Do not write any meaningful in this __init__ function other than type definition,
         # Since multiple parents are presented for the child RLEnv class
         super().__init__(use_gui=use_gui, frame_skip=frame_skip, use_visual_obs=use_visual_obs, **renderer_kwargs)
@@ -46,20 +45,25 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
         self.arm_dof: Optional[int] = None
         self.rl_step: Optional[Callable] = None
         self.get_observation: Optional[Callable] = None
-        self.robot_collision_links: Optional[List[sapien.Actor]] = None
-        self.robot_info: Optional[Union[ArmRobotInfo, FreeRobotInfo]] = None
+        self.l_robot_collision_links: Optional[List[sapien.Actor]] = None
+        self.r_robot_collision_links: Optional[List[sapien.Actor]] = None
+        self.l_robot_info: Optional[Union[ArmRobotInfo, FreeRobotInfo]] = None
+        self.r_robot_info: Optional[Union[ArmRobotInfo, FreeRobotInfo]] = None
         self.velocity_limit: Optional[np.ndarray] = None
         self.kinematic_model: Optional[PartialKinematicModel] = None
 
         # Robot cache
         self.control_time_step = None
-        self.ee_link_name = None
-        self.ee_link: Optional[sapien.Actor] = None
-        self.cartesian_error = None
+        self.l_ee_link_name = None
+        self.l_ee_link: Optional[sapien.Actor] = None
+        self.l_cartesian_error = None
+
+        self.r_ee_link_name = None
+        self.r_ee_link: Optional[sapien.Actor] = None
+        self.r_cartesian_error = None
         self.eigen_dim = eigen_dim
         if eigen_dim is not None:
             self.executor = EigenGrasp(16,eigen_dim).load_from_file("EigenGrasp/grasp_model_"+str(eigen_dim)+'.pkl')
-        
 
     def seed(self, seed=None):
         self.np_random, seed = np_random(seed)
@@ -84,41 +88,56 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
 
     @property
     def action_dim(self):
-        # return self.robot.dof
         if self.eigen_dim is not None:
-            return 6+self.eigen_dim
+            return 2*(6+self.eigen_dim)
         else:
-            return 22
+            return 44
+
     @property
     @abstractmethod
     def horizon(self):
         return 0
 
-    def setup(self, robot_name):
-        self.robot_name = robot_name
-        self.robot = load_robot(self.scene, robot_name, disable_self_collision=False)
-        self.robot.set_pose(sapien.Pose(np.array([0, 0, -5])))
+    def setup(self):
+        #left
+        self.l_robot_name = 'allegro_xarm7_left'
+        self.l_robot = load_robot(self.scene, self.l_robot_name, disable_self_collision=False)
+        self.l_robot.set_pose(sapien.Pose(np.array([0, 0, -5])))
 
-        info = generate_arm_robot_hand_info()[robot_name]
-        self.arm_dof = info.arm_dof
-        hand_dof = info.hand_dof
-        limit = 0.1
-        limit_hand = 1
-        velocity_limit = np.array([limit] * 3 + [limit] * 3 + [np.pi*limit_hand] * hand_dof)
+        
+        l_info = generate_arm_robot_hand_info()[self.l_robot_name]
+        self.arm_dof = l_info.arm_dof
+        hand_dof = l_info.hand_dof
+        velocity_limit = np.array([1] * 3 + [1] * 3 + [np.pi] * hand_dof)
         self.velocity_limit = np.stack([-velocity_limit, velocity_limit], axis=1)
-        start_joint_name = self.robot.get_joints()[1].get_name()
-        end_joint_name = self.robot.get_active_joints()[self.arm_dof - 1].get_name()
-        self.kinematic_model = PartialKinematicModel(self.robot, start_joint_name, end_joint_name)
+        start_joint_name = self.l_robot.get_joints()[1].get_name()
+        end_joint_name = self.l_robot.get_active_joints()[self.arm_dof - 1].get_name()
+        self.kinematic_model = PartialKinematicModel(self.l_robot, start_joint_name, end_joint_name)
         self.ee_link_name = self.kinematic_model.end_link_name
-        self.ee_link = [link for link in self.robot.get_links() if link.get_name() == self.ee_link_name][0]
+        self.l_ee_link = [link for link in self.l_robot.get_links() if link.get_name() == self.ee_link_name][0]
 
-        self.robot_info = info
-        self.robot_collision_links = [link for link in self.robot.get_links() if len(link.get_collision_shapes()) > 0]
+        self.l_robot_info = l_info
+        self.l_robot_collision_links = [link for link in self.l_robot.get_links() if len(link.get_collision_shapes()) > 0]
+
+        #right
+        self.r_robot_name='allegro_xarm7_right'
+        self.r_robot = load_robot(self.scene, self.r_robot_name, disable_self_collision=False)
+        self.r_robot.set_pose(sapien.Pose(np.array([0, 0, -5])))
+
+        r_info = generate_arm_robot_hand_info()[self.r_robot_name]
+        hand_dof = r_info.hand_dof
+        velocity_limit = np.array([1] * 3 + [1] * 3 + [np.pi] * hand_dof)
+        self.velocity_limit = np.stack([-velocity_limit, velocity_limit], axis=1)
+        start_joint_name = self.r_robot.get_joints()[1].get_name()
+        end_joint_name = self.r_robot.get_active_joints()[self.arm_dof - 1].get_name()
+        self.kinematic_model = PartialKinematicModel(self.r_robot, start_joint_name, end_joint_name)
+        self.ee_link_name = self.kinematic_model.end_link_name
+        self.r_ee_link = [link for link in self.r_robot.get_links() if link.get_name() == self.ee_link_name][0]
+
+        self.r_robot_info = r_info
+        self.r_robot_collision_links = [link for link in self.r_robot.get_links() if len(link.get_collision_shapes()) > 0]
+
         self.control_time_step = self.scene.get_timestep() * self.frame_skip
-        print("frame_skip", self.frame_skip)
-        print("control_time_step", self.control_time_step)
-
-        # Choose different step function
         self.rl_step = self.arm_sim_step
 
         # Scene light and obs
@@ -129,51 +148,89 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
         else:
             self.get_observation = self.get_oracle_state
 
+    
+
     def arm_sim_step(self, action: np.ndarray):
-        current_qpos = self.robot.get_qpos()
-        #print("current_qpos", current_qpos)
-        ee_link_last_pose = self.ee_link.get_pose()
-        # print("ee_link_last_pose", ee_link_last_pose)
-        action[:6] = np.clip(action[:6], -1, 1)
         if self.eigen_dim is not None:
-            hand_qpos= self.executor.compute_grasp(action[6:])
+            single_action_dim = 6+self.eigen_dim
         else:
-            for i in range(16):
-                action[i+6] *= 2
-            hand_qpos = np.clip(action[6:], self.robot.get_qlimits()[self.arm_dof:][:, 0], self.robot.get_qlimits()[self.arm_dof:][:, 1])
+            single_action_dim = 22
+        l_current_qpos = self.l_robot.get_qpos()
+        l_ee_link_last_pose = self.l_ee_link.get_pose()
+        l_action = np.clip(action[:single_action_dim], -1, 1)
+        l_target_root_velocity = recover_action(l_action[:6], self.velocity_limit[:6])
+        l_palm_jacobian = self.kinematic_model.compute_end_link_spatial_jacobian(l_current_qpos[:self.arm_dof])
+        l_arm_qvel = compute_inverse_kinematics(l_target_root_velocity, l_palm_jacobian)[:self.arm_dof]
+        l_arm_qvel = np.clip(l_arm_qvel, -np.pi / 1, np.pi / 1)
+        l_arm_qpos = l_arm_qvel * self.control_time_step + self.l_robot.get_qpos()[:self.arm_dof]
+
+        #l_hand_qpos = recover_action(l_action[6:], self.l_robot.get_qlimits()[self.arm_dof:])
+        l_hand_qpos= self.executor.compute_grasp(l_action[6:single_action_dim])
+        #l_hand_qpos = np.clip(l_action[6:], self.l_robot.get_qlimits()[self.arm_dof:][:, 0], self.l_robot.get_qlimits()[self.arm_dof:][:, 1])
         
-
-        # print("action", action)
-        target_root_velocity = recover_action(action[:6], self.velocity_limit[:6])
-        # print("target_root_velocity", target_root_velocity)
-        palm_jacobian = self.kinematic_model.compute_end_link_spatial_jacobian(current_qpos[:self.arm_dof])
-        arm_qvel = compute_inverse_kinematics(target_root_velocity, palm_jacobian)[:self.arm_dof]
-        arm_qvel = np.clip(arm_qvel, -np.pi / 1, np.pi / 1)
-        # print("arm_qvel", arm_qvel)
-        arm_qpos = arm_qvel * self.control_time_step + self.robot.get_qpos()[:self.arm_dof]
-        # print("arm_qpos", arm_qpos)
-
-        # hand_qpos = recover_action(action[6:], self.robot.get_qlimits()[self.arm_dof:])
-        # print("hand_qpos1", hand_qpos)
-        # TODO 速度限制
         # allowed_hand_motion = self.velocity_limit[6:] * self.control_time_step
-        # hand_qpos = np.clip(hand_qpos, current_qpos[self.arm_dof:] + allowed_hand_motion[:, 0],
-        #                      current_qpos[self.arm_dof:] + allowed_hand_motion[:, 1])
-        # print("hand_qpos2", hand_qpos)
-        target_qpos = np.concatenate([arm_qpos, hand_qpos])
-        target_qvel = np.zeros_like(target_qpos)
-        target_qvel[:self.arm_dof] = arm_qvel
-        self.robot.set_drive_target(target_qpos)
-        self.robot.set_drive_velocity_target(target_qvel)
+        # hand_qpos = np.clip(hand_qpos, current_qpos[6:] + allowed_hand_motion[:, 0],
+        #                     current_qpos[6:] + allowed_hand_motion[:, 1])
+        l_target_qpos = np.concatenate([l_arm_qpos, l_hand_qpos])
+        l_target_qvel = np.zeros_like(l_target_qpos)
+        l_target_qvel[:self.arm_dof] = l_arm_qvel    
+        self.l_robot.set_drive_target(l_target_qpos)
+        self.l_robot.set_drive_velocity_target(l_target_qvel)
+
+        r_current_qpos = self.r_robot.get_qpos()
+        r_ee_link_last_pose = self.r_ee_link.get_pose()
+        r_action = np.clip(action[6+self.eigen_dim:], -1, 1)
+        r_target_root_velocity = recover_action(r_action[:6], self.velocity_limit[:6])
+        r_palm_jacobian = self.kinematic_model.compute_end_link_spatial_jacobian(r_current_qpos[:self.arm_dof])
+        r_arm_qvel = compute_inverse_kinematics(r_target_root_velocity, r_palm_jacobian)[:self.arm_dof]
+        r_arm_qvel = np.clip(r_arm_qvel, -np.pi / 1, np.pi / 1)
+        r_arm_qpos = r_arm_qvel * self.control_time_step + self.r_robot.get_qpos()[:self.arm_dof]
+
+        #r_hand_qpos = recover_action(r_action[6:], self.r_robot.get_qlimits()[self.arm_dof:])
+        #r_hand_qpos = np.clip(r_action[6:], self.r_robot.get_qlimits()[self.arm_dof:][:, 0], self.r_robot.get_qlimits()[self.arm_dof:][:, 1])
+        r_hand_qpos= self.executor.compute_grasp(r_action[6:])
+
+
+        # allowed_hand_motion = self.velocity_limit[6:] * self.control_time_step
+        # hand_qpos = np.clip(hand_qpos, current_qpos[6:] + allowed_hand_motion[:, 0],
+        #                     current_qpos[6:] + allowed_hand_motion[:, 1])
+        r_target_qpos = np.concatenate([r_arm_qpos, r_hand_qpos])
+        r_target_qvel = np.zeros_like(r_target_qpos)
+        r_target_qvel[:self.arm_dof] = r_arm_qvel
+        self.r_robot.set_drive_target(r_target_qpos)
+        self.r_robot.set_drive_velocity_target(r_target_qvel)
+
 
         for i in range(self.frame_skip):
-            self.robot.set_qf(self.robot.compute_passive_force(external=False, coriolis_and_centrifugal=False))
+            self.l_robot.set_qf(self.l_robot.compute_passive_force(external=False, coriolis_and_centrifugal=False))
+            self.r_robot.set_qf(self.r_robot.compute_passive_force(external=False, coriolis_and_centrifugal=False))
+
             self.scene.step()
         self.current_step += 1
 
-        ee_link_new_pose = self.ee_link.get_pose()
-        relative_pos = ee_link_new_pose.p - ee_link_last_pose.p
-        self.cartesian_error = np.linalg.norm(relative_pos - target_root_velocity[:3] * self.control_time_step)
+        l_ee_link_new_pose = self.l_ee_link.get_pose()
+        l_relative_pos = l_ee_link_new_pose.p - l_ee_link_last_pose.p
+        self.l_cartesian_error = np.linalg.norm(l_relative_pos - l_target_root_velocity[:3] * self.control_time_step)
+
+        r_ee_link_new_pose = self.r_ee_link.get_pose()
+        r_relative_pos = r_ee_link_new_pose.p - r_ee_link_last_pose.p
+        self.r_cartesian_error = np.linalg.norm(r_relative_pos - r_target_root_velocity[:3] * self.control_time_step)
+
+    def arm_kinematic_step(self, action: np.ndarray):
+        """
+        This function run the action in kinematics level without simulating the dynamics. It is mainly used for debug.
+        Args:
+            action: robot arm spatial velocity plus robot hand joint angles
+
+        """
+        target_root_velocity = recover_action(action[:6], self.velocity_limit[:6])
+        palm_jacobian = self.kinematic_model.compute_end_link_spatial_jacobian(self.robot.get_qpos()[:self.arm_dof])
+        arm_qvel = compute_inverse_kinematics(target_root_velocity, palm_jacobian)[:self.arm_dof]
+        arm_qvel = np.clip(arm_qvel, -np.pi, np.pi)
+        arm_qpos = arm_qvel * self.scene.timestep * self.frame_skip + self.robot.get_qpos()[:self.arm_dof]
+        target_qpos = np.concatenate([arm_qpos, recover_action(action[6:], self.robot.get_qlimits()[self.arm_dof:])])
+        self.robot.set_qpos(target_qpos)
+        self.current_step += 1
 
     def reset_internal(self):
         self.current_step = 0
@@ -206,6 +263,7 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
         if self.current_step >= self.horizon:
             info["TimeLimit.truncated"] = not done
             done = True
+            
         return obs, reward, done, info
 
     def setup_visual_obs_config(self, config: Dict[str, Dict]):
@@ -252,20 +310,32 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
         # Imagination class: 0 (observed), 1 (robot), 2 (goal), 3 (contact)
         img_dict = {}
 
-        collision_link_names = [link.get_name() for link in self.robot_collision_links]
+        l_collision_link_names = [link.get_name() for link in self.l_robot_collision_links]
+        r_collision_link_names = [link.get_name() for link in self.r_robot_collision_links]
+
         for img_type, link_config in config.items():
             if img_type not in acceptable_imagination:
                 raise ValueError(f"Unknown Imagination config name: {img_type}.")
             if img_type == "robot":
-                img_dict["robot"] = {}
+                img_dict["l_robot"] = {}
                 for link_name, point_size in link_config.items():
-                    if link_name not in collision_link_names:
+                    if link_name not in l_collision_link_names:
                         raise ValueError(f"Link name {link_name} does not have collision geometry.")
-                    link = [link for link in self.robot_collision_links if link.get_name() == link_name][0]
+                    link = [link for link in self.l_robot_collision_links if link.get_name() == link_name][0]
                     o3d_mesh = actor_to_open3d_mesh(link, use_collision_mesh=False, use_actor_pose=False)
                     sampled_cloud = o3d_mesh.sample_points_uniformly(number_of_points=point_size)
                     cloud_points = np.asarray(sampled_cloud.points)
-                    img_dict["robot"][link_name] = (link, cloud_points, 1)
+                    img_dict["l_robot"][link_name] = (link, cloud_points, 1)
+
+                img_dict["r_robot"] = {}
+                for link_name, point_size in link_config.items():
+                    if link_name not in r_collision_link_names:
+                        raise ValueError(f"Link name {link_name} does not have collision geometry.")
+                    link = [link for link in self.r_robot_collision_links if link.get_name() == link_name][0]
+                    o3d_mesh = actor_to_open3d_mesh(link, use_collision_mesh=False, use_actor_pose=False)
+                    sampled_cloud = o3d_mesh.sample_points_uniformly(number_of_points=point_size)
+                    cloud_points = np.asarray(sampled_cloud.points)
+                    img_dict["r_robot"][link_name] = (link, cloud_points, 1)
             elif img_type == "goal":
                 img_dict["goal"] = {}
                 # We do not use goal actor pointer to index pose. During reset, the goal actor may be removed.
@@ -288,22 +358,31 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
                 if reset_goal:
                     imagination_goal = []
                     for link_name, (attr_name, points, img_class) in img_config.items():
-                        pose = self.robot.get_pose().inv() * self.__dict__[attr_name].get_pose()
+                        pose = self.l_robot.get_pose().inv() * self.__dict__[attr_name].get_pose()
                         mat = pose.to_transformation_matrix()
                         transformed_points = points @ mat[:3, :3].T + mat[:3, 3][None, :]
                         imagination_goal.append(transformed_points)
                     self.imaginations["imagination_goal"] = np.concatenate(imagination_goal, axis=0)
 
-            if img_type == "robot":
+            if img_type == "l_robot":
                 imagination_robot = []
                 for link_name, (actor, points, img_class) in img_config.items():
-                    pose = self.robot.get_pose().inv() * actor.get_pose()
+                    pose = self.r_robot.get_pose().inv() * actor.get_pose()
                     mat = pose.to_transformation_matrix()
                     transformed_points = points @ mat[:3, :3].T + mat[:3, 3][None, :]
                     imagination_robot.append(transformed_points)
-                    self.imaginations["imagination_robot"] = np.concatenate(imagination_robot, axis=0)
-                    # TODO
-                    # self.imaginations["imagination_robot"] = np.zeros((96, 3))
+                    l_imagination_robot = np.concatenate(imagination_robot, axis=0,dtype=np.float32)
+                    #self.imaginations["l_imagination_robot"] = np.concatenate(imagination_robot, axis=0,dtype=np.float32)
+            if img_type == "r_robot":
+                imagination_robot = []
+                for link_name, (actor, points, img_class) in img_config.items():
+                    pose = self.r_robot.get_pose().inv() * actor.get_pose()
+                    mat = pose.to_transformation_matrix()
+                    transformed_points = points @ mat[:3, :3].T + mat[:3, 3][None, :]
+                    imagination_robot.append(transformed_points)
+                    r_imagination_robot = np.concatenate(imagination_robot, axis=0,dtype=np.float32)
+
+        self.imaginations["imagination_robot"] = np.concatenate((l_imagination_robot,r_imagination_robot), axis=0, dtype=np.float32)
 
     @property
     def obs_dim(self):
@@ -370,7 +449,7 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
                     kwargs = camera_cfg["point_cloud"].get("process_fn_kwargs", {})
                     obs = camera_cfg["point_cloud"]["process_fn"](obs, camera_pose,
                                                                   camera_cfg["point_cloud"]["num_points"],
-                                                                  self.np_random, **kwargs)
+                                                                  self.np_random, **kwargs).astype(np.float32)
                     if "additional_process_fn" in camera_cfg["point_cloud"]:
                         for fn in camera_cfg["point_cloud"]["additional_process_fn"]:
                             obs = fn(obs, self.np_random)
@@ -388,16 +467,13 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
     def get_camera_to_robot_pose(self, camera_name):
         gl_pose = self.cameras[camera_name].get_pose()
         camera_pose = gl_pose * gl2sapien
-        camera2robot = self.robot.get_pose().inv() * camera_pose
+        # TODO
+        camera2robot = self.r_robot.get_pose().inv() * camera_pose
         return camera2robot.to_transformation_matrix()
 
     @cached_property
     def action_space(self):
-        lo=np.full(self.action_dim, -1)
-        hi=np.full(self.action_dim, 1)  
-        # lo[6:]=-2
-        # hi[6:]=2
-        return gym.spaces.Box(low=lo, high=hi, shape=(self.action_dim,))
+        return gym.spaces.Box(low=-1, high=1, shape=(self.action_dim,))
 
     @cached_property
     def observation_space(self):
@@ -409,7 +485,8 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
         else:
             oracle_dim = len(self.get_oracle_state())
             oracle_space = gym.spaces.Box(low=-np.inf * np.ones(oracle_dim), high=np.inf * np.ones(oracle_dim))
-            obs_dict = {"state": state_space, "oracle_state": oracle_space}
+            obs_dict = dict(state=state_space, oracle_state=oracle_space)
+            
             for cam_name, cam_cfg in self.camera_infos.items():
                 cam = self.cameras[cam_name]
                 resolution = (cam.height, cam.width)
