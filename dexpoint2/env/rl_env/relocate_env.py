@@ -77,7 +77,9 @@ class AllegroRelocateRLEnv(LabRelocateEnv, BaseRLEnv):
             "reward_contact_and_lift": 0.0,
             "reward_target_obj_dis": 0.0,
             "reward_other": 0.0,
+            "reward_ee_vel": 0.0,
         }
+        self.clip_network_output = False
 
     def update_cached_state(self):
         for i, link in enumerate(self.finger_tip_links):
@@ -159,6 +161,7 @@ class AllegroRelocateRLEnv(LabRelocateEnv, BaseRLEnv):
         reward += self.reward_contact_and_lift(action)
         reward += self.reward_target_obj_dis(action)
         reward += self.reward_other(action)
+        reward += self.reward_ee_vel()
 
        
         return reward / 10
@@ -205,7 +208,8 @@ class AllegroRelocateRLEnv(LabRelocateEnv, BaseRLEnv):
             "reward_palm_object_dis": self.reward_palm_object_dis_val,
             "reward_contact_and_lift": self.reward_contact_and_lift_val,
             "reward_target_obj_dis": self.reward_target_obj_dis_val,
-            "reward_other": self.reward_other_val
+            "reward_other": self.reward_other_val,
+            "reward_ee_vel": self.reward_ee_vel_val
         }
         if self.print_is:
             print(info)
@@ -295,11 +299,18 @@ class AllegroRelocateRLEnv(LabRelocateEnv, BaseRLEnv):
     
     def reward_other(self, action):
         reward = 0.0
-        reward += np.sum(np.clip(self.robot.get_qvel(), -1, 1) ** 2) * -0.01
+        qvel = self.robot.get_qvel()
+        #print('robot vel:', qvel.shape)
+        reward += np.sum(np.clip(qvel[:7], -1, 1) ** 2) * -0.1
+        reward += np.sum(np.clip(qvel[7:], -1, 1) ** 2) * -0.01
         reward += (self.cartesian_error ** 2) * -1e3
         self.reward_other_val = reward
         return reward
 
+    def reward_ee_vel(self):
+        reward=np.sum(np.clip((np.abs(self.ori_action[:6]) - 1),0,100) ** 2) * -0.1
+        self.reward_ee_vel_val = reward
+        return reward
 
     def is_done(self):
         if  np.linalg.norm(self.target_in_object) < 0.04 or self.object_lift < OBJECT_LIFT_LOWER_LIMIT or (self.object_move >0.04 and self.object_lift < 0.02):
