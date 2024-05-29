@@ -24,7 +24,7 @@ OBS_CONFIG = {
     "relocate_noise": {
         "relocate": {
             "point_cloud": {"process_fn": process_relocate_pc_noise, "num_points": 512, "pose_perturb_level": 0.5,
-                            "process_fn_kwargs": {"noise_level": 0.5}},
+                            "process_fn_kwargs": {"noise_level": 5}},
         },
     },
     "relocate_noise_double": {

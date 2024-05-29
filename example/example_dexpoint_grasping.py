@@ -26,7 +26,7 @@ if __name__ == '__main__':
         # based on "CUDA_VISIBLE_DEVICES".
         if "CUDA_VISIBLE_DEVICES" in os.environ:
             env_params["device"] = "cuda"
-        environment = DoubleAllegroRelocateRLEnv(**env_params)
+        environment = AllegroRelocateRLEnv(**env_params)
 
         # Create camera
         environment.setup_camera_from_config(task_setting.CAMERA_CONFIG["relocate_double"])
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     simple_pc = SimplePointCloud()
 
     tic = time()
-    rl_steps = 10000
+    rl_steps = 100000
     from EigenGrasp.eigengrasp import EigenGrasp
 
     executor = EigenGrasp(16,7).load_from_file("/home/wyk/Dex/dexpoint-v2/EigenGrasp/grasp_model.pkl")
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     grasp_action = executor.compute_grasp(feature)
     #grasp_action=executor._pca.components_[]
     print('grasp_action:',grasp_action)
-    action=np.zeros(44)
+    action=np.zeros(22)
     #action[-16:] = grasp_action
     for i in range(200):
         #action = np.zeros(env.action_space.shape)

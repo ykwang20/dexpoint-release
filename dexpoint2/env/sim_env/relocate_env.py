@@ -79,7 +79,7 @@ class LabRelocateEnv(BaseSimulationEnv):
         return manipulated_object, target_object, object_height
 
     def generate_random_object_pose(self, randomness_scale):
-        pos = self.np_random.uniform(low=-0.1, high=0.1, size=2) * randomness_scale
+        pos = self.np_random.uniform(low=-0.15, high=0.15, size=2) * randomness_scale
         if self.object_category == "ycb":
             orientation = YCB_ORIENTATION[self.object_name]
         else:

@@ -130,11 +130,13 @@ class BaseRLEnv(BaseSimulationEnv, gym.Env):
             self.get_observation = self.get_oracle_state
 
     def arm_sim_step(self, action: np.ndarray):
+        self.ori_action=action
+        reward=np.sum(np.clip((np.abs(self.ori_action[:3]) - 1),0,100) ** 2) * -0.1
         current_qpos = self.robot.get_qpos()
         #print("current_qpos", current_qpos)
         ee_link_last_pose = self.ee_link.get_pose()
         # print("ee_link_last_pose", ee_link_last_pose)
-        action[:6] = np.clip(action[:6], -1, 1)
+        action = np.clip(action, -1, 1)
         if self.eigen_dim is not None:
             hand_qpos= self.executor.compute_grasp(action[6:])
         else:
