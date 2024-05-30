@@ -38,6 +38,7 @@ class DoubleAllegroRelocateRLEnv(DoubleLabRelocateEnv, BaseDoubleRLEnv):
         self.root_frame = root_frame
         self.base_frame_pos = np.zeros(3)
 
+
         # Finger tip: thumb, index, middle, ring
         finger_tip_names = ["link_15.0_tip", "link_3.0_tip", "link_7.0_tip", "link_11.0_tip"]
         finger_contact_link_name = [
@@ -134,6 +135,7 @@ class DoubleAllegroRelocateRLEnv(DoubleLabRelocateEnv, BaseDoubleRLEnv):
 
 
     def get_oracle_state(self):
+        print('base_frame_pos:',self.base_frame_pos)
         object_pos = self.object_pose.p
         object_quat = self.object_pose.q
         object_pose_vec = np.concatenate([object_pos - self.base_frame_pos, object_quat])
