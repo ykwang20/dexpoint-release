@@ -38,6 +38,7 @@ class DoubleAllegroRelocateRLEnv(DoubleLabRelocateEnv, BaseDoubleRLEnv):
         self.root_frame = root_frame
         self.base_frame_pos = np.zeros(3)
 
+
         # Finger tip: thumb, index, middle, ring
         finger_tip_names = ["link_15.0_tip", "link_3.0_tip", "link_7.0_tip", "link_11.0_tip"]
         finger_contact_link_name = [
@@ -61,8 +62,9 @@ class DoubleAllegroRelocateRLEnv(DoubleLabRelocateEnv, BaseDoubleRLEnv):
         self.r_finger_contact_ids = np.array([0] * 3 + [1] * 4 + [2] * 4 + [3] * 4 + [4])
         self.r_finger_tip_pos = np.zeros([len(finger_tip_names), 3])
 
-        self.finger_reward_scale = np.ones(len(self.l_finger_tip_links)) * 0.01
-        self.finger_reward_scale[0] = 0.04
+        # self.finger_reward_scale = np.ones(len(self.l_finger_tip_links)) * 0.01
+        # self.finger_reward_scale[0] = 0.04
+        self.finger_reward_scale = np.ones(len(self.l_finger_tip_links)) * 0.02
 
         # Object, palm, target pose
         self.object_pose = self.manipulated_object.get_pose()
@@ -82,9 +84,20 @@ class DoubleAllegroRelocateRLEnv(DoubleLabRelocateEnv, BaseDoubleRLEnv):
         self.l_robot_object_contact = np.zeros(len(finger_tip_names) + 1)  # four tip, palm 
         self.r_robot_object_contact = np.zeros(len(finger_tip_names) + 1)  # four tip, palm 
 
+        
         self.reward_info = {
-           
+            "reward_l_finger_object_dis": 0.0,
+            "reward_l_palm_object_dis": 0.0,
+            "reward_l_contact": 0.0,
+            "reward_r_finger_object_dis": 0.0,
+            "reward_r_palm_object_dis": 0.0,
+            "reward_r_contact": 0.0,
+            "reward_lift": 0.0,
+            "reward_target_obj_dis": 0.0,
+            "reward_other": 0.0,
         }
+        self.clip_network_output = True
+        self.print_is = False
 
 
 
@@ -102,19 +115,27 @@ class DoubleAllegroRelocateRLEnv(DoubleLabRelocateEnv, BaseDoubleRLEnv):
         self.r_robot_object_contact[:] = np.clip(np.bincount(self.r_finger_contact_ids, weights=r_contact_boolean), 0, 1)
 
         self.object_pose = self.manipulated_object.get_pose()
+
         self.l_palm_pose = self.l_palm_link.get_pose()
         self.l_palm_pos_in_base = self.l_palm_pose.p - self.base_frame_pos
+        self.l_palm_in_object = self.l_palm_link.get_pose().p - self.object_pose.p
         self.l_object_in_tip = self.object_pose.p[None, :] - self.l_finger_tip_pos
 
         self.r_palm_pose = self.r_palm_link.get_pose()
         self.r_palm_pos_in_base = self.r_palm_pose.p - self.base_frame_pos
+        self.r_palm_in_object = self.r_palm_link.get_pose().p - self.object_pose.p
         self.r_object_in_tip = self.object_pose.p[None, :] - self.r_finger_tip_pos
+
         self.object_lift = self.object_pose.p[2] - self.object_height
         self.target_in_object = self.target_pose.p - self.object_pose.p
         self.target_in_object_angle[0] = np.arccos(
             np.clip(np.power(np.sum(self.object_pose.q * self.target_pose.q), 2) * 2 - 1, -1 + 1e-8, 1 - 1e-8))
+        self.l_is_contact = np.sum(self.l_robot_object_contact) >= 2
+        self.r_is_contact = np.sum(self.r_robot_object_contact) >= 2
+
 
     def get_oracle_state(self):
+        print('base_frame_pos:',self.base_frame_pos)
         object_pos = self.object_pose.p
         object_quat = self.object_pose.q
         object_pose_vec = np.concatenate([object_pos - self.base_frame_pos, object_quat])
@@ -139,31 +160,131 @@ class DoubleAllegroRelocateRLEnv(DoubleLabRelocateEnv, BaseDoubleRLEnv):
         ], dtype=np.float32)
         return robot_state
 
-    def get_reward(self, action):
-        l_finger_object_dist = np.linalg.norm(self.l_object_in_tip, axis=1, keepdims=False)
-        l_finger_object_dist = np.clip(l_finger_object_dist, 0.03, 0.8)
-        r_finger_object_dist = np.linalg.norm(self.r_object_in_tip, axis=1, keepdims=False)
-        r_finger_object_dist = np.clip(r_finger_object_dist, 0.03, 0.8)
-        reward = np.sum(1.0 / (0.06 + l_finger_object_dist) * self.finger_reward_scale)+np.sum(1.0 / (0.06 + r_finger_object_dist) * self.finger_reward_scale)
-        # at least one tip and palm or two tips are contacting obj. Thumb contact is required.
-        is_contact = (np.sum(self.r_robot_object_contact)>=2 ) and (np.sum(self.l_robot_object_contact)>=2)
+    def get_info(self):
+        # 将reward信息返回
+        info = {
+            "reward_l_finger_object_dis": self.reward_l_finger_object_dis_val,
+            "reward_l_palm_object_dis": self.reward_l_palm_object_dis_val,
+            "reward_l_contact": self.reward_l_contact_val,
+            "reward_r_finger_object_dis": self.reward_r_finger_object_dis_val,
+            "reward_r_palm_object_dis": self.reward_r_palm_object_dis_val,
+            "reward_r_contact": self.reward_r_contact_val,
+            "reward_lift": self.reward_lift_val,
+            "reward_target_obj_dis": self.reward_target_obj_dis_val,
+            "reward_other": self.reward_other_val,
+        }
+        if self.print_is:
+            print(info)
+        return info
 
-        if is_contact:
-            reward += 0.5
+    def get_reward(self, action):
+        reward = 0.0
+        reward += self.reward_l_palm_object_dis(action)
+        reward += self.reward_l_finger_object_dis(action)
+        reward += self.reward_l_contact(action)
+        reward += self.reward_r_palm_object_dis(action)
+        reward += self.reward_r_finger_object_dis(action)
+        reward += self.reward_r_contact(action)
+        reward += self.reward_lift(action)
+        reward += self.reward_target_obj_dis(action)
+        reward += self.reward_other(action)
+
+        return reward / 10
+    
+    def reward_l_palm_object_dis(self, action):
+        reward = 0.0
+        if np.sum(self.l_robot_object_contact) < 10 :
+        # if True:
+            l_palm_in_object = np.linalg.norm(self.l_palm_in_object)
+            self.l_palm_in_object_val = np.clip(l_palm_in_object, 0.07, 0.8) #0.13
+            reward = np.sum(1.0 / (0.01 + self.l_palm_in_object_val) * 0.05)
+        self.reward_l_palm_object_dis_val = reward
+        return reward
+    
+    def reward_r_palm_object_dis(self, action):
+        reward = 0.0
+        if np.sum(self.r_robot_object_contact) < 10 :
+        # if True:
+            r_palm_in_object = np.linalg.norm(self.r_palm_in_object)
+            self.r_palm_in_object_val = np.clip(r_palm_in_object, 0.07, 0.8)
+            reward = np.sum(1.0 / (0.01 + self.r_palm_in_object_val) * 0.05)
+        self.reward_r_palm_object_dis_val = reward
+        return reward
+
+    def reward_l_finger_object_dis(self, action):
+        reward = 0.0
+        if np.sum(self.l_robot_object_contact) < 10 :
+            if self.l_palm_in_object_val < 0.10:
+            # if True:
+                l_finger_object_dist = np.linalg.norm(self.l_object_in_tip, axis=1, keepdims=False)
+                l_finger_object_dist = np.clip(l_finger_object_dist, 0.05, 0.8) #0.05 0.15
+                reward = np.sum(1.0 / (0.01 + l_finger_object_dist) * self.finger_reward_scale)
+        self.reward_l_finger_object_dis_val = reward
+        return reward
+    
+    def reward_r_finger_object_dis(self, action):
+        reward = 0.0
+        if np.sum(self.r_robot_object_contact) < 10 :
+            if self.r_palm_in_object_val < 0.10:
+            # if True:
+                r_finger_object_dist = np.linalg.norm(self.r_object_in_tip, axis=1, keepdims=False)
+                r_finger_object_dist = np.clip(r_finger_object_dist, 0.05, 0.8)
+                reward = np.sum(1.0 / (0.01 + r_finger_object_dist) * self.finger_reward_scale)
+        self.reward_r_finger_object_dis_val = reward
+        return reward
+    
+    def reward_l_contact(self, action):
+        reward = 0.0
+        if np.sum(self.l_robot_object_contact) >= 1:
+            reward += 0.25 * np.clip(np.sum(self.l_robot_object_contact), 0, 3)
+        reward = reward * 2
+        self.reward_l_contact_val = reward
+        return reward
+    
+    def reward_r_contact(self, action):
+        reward = 0.0
+        if np.sum(self.r_robot_object_contact) >= 1:
+            reward += 0.25 * np.clip(np.sum(self.r_robot_object_contact), 0, 3)
+        reward = reward * 2
+        self.reward_r_contact_val = reward
+        return reward
+    
+
+    def reward_lift(self, action):
+        self.lift = False
+        reward=0
+        if self.l_is_contact and self.r_is_contact:
+            # reward += 0.5
             lift = np.clip(self.object_lift, 0, 0.2)
             reward += 10 * lift
             if lift > 0.02:
-                reward += 1
-                target_obj_dist = np.linalg.norm(self.target_in_object)
-                reward += 1.0 / (0.04 + target_obj_dist)
+                self.lift = True
+        reward = reward * 4
+        self.reward_lift_val = reward
+        return reward
+    
+    def reward_target_obj_dis(self, action):
+        reward = 0.0
+        if self.lift:
+            reward = 1
+            target_obj_dist = np.linalg.norm(self.target_in_object)
+            reward += 1.0 / (0.04 + target_obj_dist)
+        reward = reward * 4
+        self.reward_target_obj_dis_val = reward
+        return reward
+    
+    def reward_other(self, action):
+        reward = 0.0
+        l_qvel = self.l_robot.get_qvel()
+        r_qvel = self.r_robot.get_qvel()
+        #print('robot vel:', qvel.shape)
+        reward += np.sum(np.clip(l_qvel, -1, 1) ** 2) * -0.01
+        reward += np.sum(np.clip(r_qvel, -1, 1) ** 2) * -0.01
+        reward += (self.l_cartesian_error ** 2) * -1e3
+        reward += (self.r_cartesian_error ** 2) * -1e3
+        self.reward_other_val = reward
+        return reward
 
-                if target_obj_dist < 0.1:
-                    theta = self.target_in_object_angle[0]
-                    reward += 4.0 / (0.4 + theta) * self.rotation_reward_weight
-
-        action_penalty = np.sum(np.clip(self.l_robot.get_qvel(), -1, 1) ** 2) * -0.01+np.sum(np.clip(self.r_robot.get_qvel(), -1, 1) ** 2) * -0.01
-        controller_penalty = (self.l_cartesian_error ** 2) * -1e3 +(self.r_cartesian_error ** 2) * -1e3
-        return (reward + action_penalty + controller_penalty) / 10
 
     def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None):
         # Gym reset function
@@ -197,6 +318,8 @@ class DoubleAllegroRelocateRLEnv(DoubleLabRelocateEnv, BaseDoubleRLEnv):
         #TODO set the root frame
         if self.root_frame == "robot":
             self.base_frame_pos = self.l_robot.get_pose().p
+            print('l_robot_pos:',self.l_robot.get_pose().p)
+            print('r_robot_pos:',self.r_robot.get_pose().p)
         elif self.root_frame == "world":
             self.base_frame_pos = np.zeros(3)
         else:
