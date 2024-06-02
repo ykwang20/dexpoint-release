@@ -35,7 +35,7 @@ def load_shapenet_object_list():
 CAT_DICT = load_shapenet_object_list()
 
 
-def load_shapenet_object(
+def load_shapenet_object_double(
         scene: sapien.Scene,
         cat_id: str,
         model_id: str,
@@ -52,7 +52,8 @@ def load_shapenet_object(
     visual_file = str(shapenet_dir / cat_id / model_id / "model.obj")
     info = CAT_DICT[cat_id][model_id]
     scale = info["scales"]
-    height = info["height"]
+    scale= [item * 2 for item in scale]
+    height = info["height"]*2
     if not visual_only:
         builder.add_multiple_collisions_from_file(
             filename=collision_file,

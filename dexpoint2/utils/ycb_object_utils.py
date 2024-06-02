@@ -67,13 +67,13 @@ YCB_OBJECT_NAMES = list(INVERSE_YCB_CLASSES.keys())
 YCB_ROOT = get_ycb_root_dir()
 
 
-def load_ycb_object(scene: sapien.Scene, object_name, scale=1, visual_only=False, material=None, static=False):
+def load_ycb_object_double(scene: sapien.Scene, object_name, scale=1, visual_only=False, material=None, static=False):
     ycb_id = INVERSE_YCB_CLASSES[object_name]
     ycb_name = YCB_CLASSES[ycb_id]
     visual_file = YCB_ROOT / "visual" / ycb_name / "textured_simple.obj"
     collision_file = YCB_ROOT / "collision" / ycb_name / "collision.obj"
     builder = scene.create_actor_builder()
-    scales = np.array([scale] * 3)
+    scales = np.array([scale*2.5] * 3)
     density = 1000
     if material is None:
         material = scene.engine.create_physical_material(1.5, 1, 0.1)

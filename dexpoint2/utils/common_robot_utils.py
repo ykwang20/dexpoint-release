@@ -86,7 +86,6 @@ def generate_arm_robot_hand_info() -> Dict[str, ArmRobotInfo]:
     allegro_xarm7_left=ArmRobotInfo(path=str(xarm_path / "xarm7_allegro_left.urdf"), hand_dof=16, arm_dof=7,
                                       palm_name="palm_center", arm_init_qpos=[0, 0, 0, 0,  np.pi , np.pi / 2, np.pi / 2],
                                       root_offset=[-0.0244, 0, 0])         
-    
     info_dict = dict(
         shadow_hand_xarm6=shadow_hand_xarm6,
         allegro_hand_xarm6=allegro_hand_xarm6,

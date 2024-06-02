@@ -5,8 +5,8 @@ from dexpoint2.env.sim_env.base import BaseSimulationEnv
 from dexpoint2.real_world import lab
 from dexpoint2.utils.egad_object_utils import load_egad_object, EGAD_NAME
 from dexpoint2.utils.render_scene_utils import set_entity_color
-from dexpoint2.utils.shapenet_utils import load_shapenet_object, SHAPENET_CAT, CAT_DICT
-from dexpoint2.utils.ycb_object_utils import load_ycb_object, YCB_SIZE, YCB_ORIENTATION
+from dexpoint2.utils.shapenet_utils import load_shapenet_object_double, SHAPENET_CAT, CAT_DICT
+from dexpoint2.utils.ycb_object_utils import load_ycb_object_double, YCB_SIZE, YCB_ORIENTATION
 
 
 class DoubleLabRelocateEnv(BaseSimulationEnv):
@@ -41,10 +41,10 @@ class DoubleLabRelocateEnv(BaseSimulationEnv):
 
     def load_object(self, object_name):
         if self.object_category.lower() == "ycb":
-            manipulated_object = load_ycb_object(self.scene, object_name)
-            target_object = load_ycb_object(self.scene, object_name, visual_only=True)
+            manipulated_object = load_ycb_object_double(self.scene, object_name)
+            target_object = load_ycb_object_double(self.scene, object_name, visual_only=True)
             target_object.set_name("target_object")
-            object_height = YCB_SIZE[self.object_name][2] / 2
+            object_height = 2.5*YCB_SIZE[self.object_name][2] / 2
         elif self.object_category.lower() == "egad":
             if self.object_name == "any_eval":
                 names = EGAD_NAME["eval"]
@@ -65,9 +65,9 @@ class DoubleLabRelocateEnv(BaseSimulationEnv):
             if self.object_name == "any_train":
                 names = CAT_DICT[self.object_category]["train"]
                 object_name = self.np_random.choice(names)
-            manipulated_object, object_height = load_shapenet_object(self.scene, cat_id=self.object_category,
+            manipulated_object, object_height = load_shapenet_object_double(self.scene, cat_id=self.object_category,
                                                                      model_id=object_name)
-            target_object, _ = load_shapenet_object(self.scene, cat_id=self.object_category, model_id=object_name,
+            target_object, _ = load_shapenet_object_double(self.scene, cat_id=self.object_category, model_id=object_name,
                                                     visual_only=True)
             target_object.set_name("target_object")
         else:
