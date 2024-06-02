@@ -293,7 +293,7 @@ class AllegroRelocateRLEnv(LabRelocateEnv, BaseRLEnv):
             reward = 1
             target_obj_dist = np.linalg.norm(self.target_in_object)
             reward += 1.0 / (0.04 + target_obj_dist)
-        reward = reward * 2
+        reward = reward * 4
         self.reward_target_obj_dis_val = reward
         return reward
     

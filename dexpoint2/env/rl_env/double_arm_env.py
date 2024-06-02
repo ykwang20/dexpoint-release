@@ -100,7 +100,48 @@ class DoubleAllegroRelocateRLEnv(DoubleLabRelocateEnv, BaseDoubleRLEnv):
         self.print_is = False
 
 
+    def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None):
+        # Gym reset function
+        if seed is not None:
+            self.seed(seed)
 
+        self.reset_internal()
+        # Set robot qpos
+        l_qpos = np.zeros(self.l_robot.dof)
+        l_xarm_qpos = self.l_robot_info.arm_init_qpos
+        l_qpos[:self.arm_dof] = l_xarm_qpos
+        self.l_robot.set_qpos(l_qpos)
+        self.l_robot.set_drive_target(l_qpos)
+
+        r_qpos = np.zeros(self.r_robot.dof)
+        r_xarm_qpos = self.r_robot_info.arm_init_qpos
+        r_qpos[:self.arm_dof] = r_xarm_qpos
+        self.r_robot.set_qpos(r_qpos)
+        self.r_robot.set_drive_target(r_qpos)
+        
+
+        # Set robot pose
+        l_init_pos = np.array(lab.l_ROBOT2BASE.p) + self.l_robot_info.root_offset
+        l_init_pose = sapien.Pose(l_init_pos, transforms3d.euler.euler2quat(0, 0, 0))
+        self.l_robot.set_pose(l_init_pose)
+
+        r_init_pos = np.array(lab.r_ROBOT2BASE.p) + self.r_robot_info.root_offset
+        r_init_pose = sapien.Pose(r_init_pos, transforms3d.euler.euler2quat(0, 0, 0))
+        self.r_robot.set_pose(r_init_pose)
+
+        #TODO set the root frame
+        if self.root_frame == "robot":
+            self.base_frame_pos = self.l_robot.get_pose().p
+            
+        elif self.root_frame == "world":
+            self.base_frame_pos = np.zeros(3)
+            
+        else:
+            raise NotImplementedError
+        self.update_cached_state()
+        self.update_imagination(reset_goal=True)
+        return self.get_observation()
+    
     def update_cached_state(self):
         for i, link in enumerate(self.l_finger_tip_links):
             self.l_finger_tip_pos[i] = self.l_finger_tip_links[i].get_pose().p
@@ -135,7 +176,6 @@ class DoubleAllegroRelocateRLEnv(DoubleLabRelocateEnv, BaseDoubleRLEnv):
 
 
     def get_oracle_state(self):
-        print('base_frame_pos:',self.base_frame_pos)
         object_pos = self.object_pose.p
         object_quat = self.object_pose.q
         object_pose_vec = np.concatenate([object_pos - self.base_frame_pos, object_quat])
@@ -286,47 +326,7 @@ class DoubleAllegroRelocateRLEnv(DoubleLabRelocateEnv, BaseDoubleRLEnv):
         return reward
 
 
-    def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None):
-        # Gym reset function
-        if seed is not None:
-            self.seed(seed)
 
-        self.reset_internal()
-        # Set robot qpos
-        l_qpos = np.zeros(self.l_robot.dof)
-        l_xarm_qpos = self.l_robot_info.arm_init_qpos
-        l_qpos[:self.arm_dof] = l_xarm_qpos
-        self.l_robot.set_qpos(l_qpos)
-        self.l_robot.set_drive_target(l_qpos)
-
-        r_qpos = np.zeros(self.r_robot.dof)
-        r_xarm_qpos = self.r_robot_info.arm_init_qpos
-        r_qpos[:self.arm_dof] = r_xarm_qpos
-        self.r_robot.set_qpos(r_qpos)
-        self.r_robot.set_drive_target(r_qpos)
-        
-
-        # Set robot pose
-        l_init_pos = np.array(lab.l_ROBOT2BASE.p) + self.l_robot_info.root_offset
-        l_init_pose = sapien.Pose(l_init_pos, transforms3d.euler.euler2quat(0, 0, 0))
-        self.l_robot.set_pose(l_init_pose)
-
-        r_init_pos = np.array(lab.r_ROBOT2BASE.p) + self.r_robot_info.root_offset
-        r_init_pose = sapien.Pose(r_init_pos, transforms3d.euler.euler2quat(0, 0, 0))
-        self.r_robot.set_pose(r_init_pose)
-
-        #TODO set the root frame
-        if self.root_frame == "robot":
-            self.base_frame_pos = self.l_robot.get_pose().p
-            print('l_robot_pos:',self.l_robot.get_pose().p)
-            print('r_robot_pos:',self.r_robot.get_pose().p)
-        elif self.root_frame == "world":
-            self.base_frame_pos = np.zeros(3)
-        else:
-            raise NotImplementedError
-        self.update_cached_state()
-        self.update_imagination(reset_goal=True)
-        return self.get_observation()
 
     def is_done(self):
         return bool(self.object_lift < OBJECT_LIFT_LOWER_LIMIT)
