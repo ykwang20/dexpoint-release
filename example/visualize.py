@@ -6,6 +6,7 @@ import time
 
 import argparse
 from dexpoint2.env.rl_env.relocate_env import AllegroRelocateRLEnv
+from dexpoint2.env.rl_env.double_arm_env import DoubleAllegroRelocateRLEnv
 from dexpoint2.real_world import task_setting
 from stable_baselines_dexpoint2.common.torch_layers import PointNetImaginationExtractorGP
 from stable_baselines_dexpoint2.ppo import PPO
@@ -31,7 +32,8 @@ def get_3d_policy_kwargs(extractor_name):
 def create_env_fn():
     object_names = ["mustard_bottle", "tomato_soup_can", "potted_meat_can"]
     object_name = np.random.choice(object_names)
-    # object_category="YCB"
+    object_name="potted_meat_can"
+    object_category="YCB"
     object_name = "any_train"
     object_category = "02876657"
     env_params = dict(robot_name="xarm7_allegro_v2",
@@ -45,12 +47,12 @@ def create_env_fn():
                       no_rgb=True,
                       object_category=object_category)
 
-    environment = AllegroRelocateRLEnv(**env_params)
+    environment = DoubleAllegroRelocateRLEnv(**env_params)
 
     environment.setup_camera_from_config(
-        task_setting.CAMERA_CONFIG["relocate"])
+        task_setting.CAMERA_CONFIG["relocate_double"])
     environment.setup_visual_obs_config(
-        task_setting.OBS_CONFIG["relocate_noise"])
+        task_setting.OBS_CONFIG["relocate_noise_double"])
     environment.setup_imagination_config(
         task_setting.IMG_CONFIG["relocate_robot_only"])
     return environment
@@ -70,7 +72,7 @@ if __name__ == '__main__':
     parser.add_argument('--task_name', type=str, default="allegro_hand_xarm7")
     parser.add_argument('--extractor_name', type=str, default="smallpn")
     parser.add_argument('--pretrain_path', type=str, default="20240425-1907")
-    parser.add_argument('--model_path', type=str, default="model_dex8.zip")
+    parser.add_argument('--model_path', type=str, default="531_double.zip")
     parser.add_argument('--horizon', type=str, default="200")
     parser.add_argument('--eigen_dim', type=int, default=2)
     args = parser.parse_args()
@@ -109,7 +111,7 @@ if __name__ == '__main__':
             # time.sleep(2)
 
             action = policy.predict(observation=obs, deterministic=True)[0]
-            # print("action",action)
+            print("action",action)
             # action[6:0] = action[6:] - [-0.0,-0.78539815,-0.78539815,-0.78539815,-0.0,-0.78539815,-0.78539815 ,-0.78539815 , -0.0,-0.78539815,-0.78539815,-0.78539815,-0.78539815,-0.78539815,-0.78539815,-0.78539815]
 
             obs, reward, done, _ = env.step(action)

@@ -63,7 +63,6 @@ if __name__ == '__main__':
         #action = np.zeros(env.action_space.shape)
         # action[0] = 0.0  # Moving forward ee link in x-axis
         obs, reward, done, info = env.step(action)
-        print('obs.state', obs['state'])
         # l_pose = env.l_robot.get_pose()
         # r_pose = env.r_robot.get_pose()
         # print("Left robot pose:", l_pose)

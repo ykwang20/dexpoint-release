@@ -389,10 +389,10 @@ def main_env():
     viewer.toggle_pause(True)
     pose = env.l_palm_link.get_pose()
     for i in range(5000):
-        action = np.zeros(44)
+        action = np.zeros(16)
         action[0] = 0.03
-        action[22] =-0.03
-        action[23]=0.04
+        # action[22] =-0.03
+        # action[23]=0.04
         obs, reward, done, _ = env.step(action)
         env.render()
         if i == 100:
