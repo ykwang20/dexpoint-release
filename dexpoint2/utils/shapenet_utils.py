@@ -71,3 +71,40 @@ def load_shapenet_object_double(
     else:
         actor = builder.build_static(name=model_id)
     return actor, height
+
+def load_shapenet_object(
+        scene: sapien.Scene,
+        cat_id: str,
+        model_id: str,
+        physical_material: sapien.PhysicalMaterial = None,
+        density=1000,
+        visual_only=False
+):
+    builder = scene.create_actor_builder()
+
+    if physical_material is None:
+        physical_material = scene.engine.create_physical_material(1.5, 1, 0.01)
+    shapenet_dir = get_shapenet_root_dir()
+    collision_file = str(shapenet_dir / cat_id / model_id / "convex.obj")
+    visual_file = str(shapenet_dir / cat_id / model_id / "model.obj")
+    info = CAT_DICT[cat_id][model_id]
+    scale = info["scales"]
+    scale= [item  for item in scale]
+    height = info["height"]
+    if not visual_only:
+        builder.add_multiple_collisions_from_file(
+            filename=collision_file,
+            scale=np.array(scale * 3),
+            material=physical_material,
+            density=density,
+            pose=sapien.Pose(q=np.array([0.7071, 0.7071, 0, 0]))
+        )
+
+    builder.add_visual_from_file(filename=visual_file, scale=np.array(scale * 3),
+                                 pose=sapien.Pose(q=np.array([0.7071, 0.7071, 0, 0])))
+
+    if not visual_only:
+        actor = builder.build(name=model_id)
+    else:
+        actor = builder.build_static(name=model_id)
+    return actor, height

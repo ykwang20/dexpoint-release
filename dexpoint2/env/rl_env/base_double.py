@@ -165,7 +165,13 @@ class BaseDoubleRLEnv(BaseSimulationEnv, gym.Env):
         l_arm_qpos = l_arm_qvel * self.control_time_step + self.l_robot.get_qpos()[:self.arm_dof]
 
         #l_hand_qpos = recover_action(l_action[6:], self.l_robot.get_qlimits()[self.arm_dof:])
-        l_hand_qpos= self.executor.compute_grasp(l_action[6:single_action_dim])
+        if self.eigen_dim is not None:
+            l_hand_qpos= self.executor.compute_grasp(l_action[6:])
+        else:
+            print('l_action:',l_action)
+            for i in range(16):
+                l_action[i+6] *= 2
+            l_hand_qpos = np.clip(l_action[6:], self.l_robot.get_qlimits()[self.arm_dof:][:, 0], self.l_robot.get_qlimits()[self.arm_dof:][:, 1])
         #l_hand_qpos = np.clip(l_action[6:], self.l_robot.get_qlimits()[self.arm_dof:][:, 0], self.l_robot.get_qlimits()[self.arm_dof:][:, 1])
         
         # allowed_hand_motion = self.velocity_limit[6:] * self.control_time_step
@@ -179,7 +185,7 @@ class BaseDoubleRLEnv(BaseSimulationEnv, gym.Env):
 
         r_current_qpos = self.r_robot.get_qpos()
         r_ee_link_last_pose = self.r_ee_link.get_pose()
-        r_action = np.clip(action[6+self.eigen_dim:], -1, 1)
+        r_action = np.clip(action[single_action_dim:], -1, 1)
         r_target_root_velocity = recover_action(r_action[:6], self.velocity_limit[:6])
         r_palm_jacobian = self.kinematic_model.compute_end_link_spatial_jacobian(r_current_qpos[:self.arm_dof])
         r_arm_qvel = compute_inverse_kinematics(r_target_root_velocity, r_palm_jacobian)[:self.arm_dof]
@@ -188,7 +194,12 @@ class BaseDoubleRLEnv(BaseSimulationEnv, gym.Env):
 
         #r_hand_qpos = recover_action(r_action[6:], self.r_robot.get_qlimits()[self.arm_dof:])
         #r_hand_qpos = np.clip(r_action[6:], self.r_robot.get_qlimits()[self.arm_dof:][:, 0], self.r_robot.get_qlimits()[self.arm_dof:][:, 1])
-        r_hand_qpos= self.executor.compute_grasp(r_action[6:])
+        if self.eigen_dim is not None:
+            r_hand_qpos= self.executor.compute_grasp(r_action[6:])
+        else:
+            for i in range(16):
+                r_action[i+6] *= 2
+            r_hand_qpos = np.clip(r_action[6:], self.r_robot.get_qlimits()[self.arm_dof:][:, 0], self.r_robot.get_qlimits()[self.arm_dof:][:, 1])
 
 
         # allowed_hand_motion = self.velocity_limit[6:] * self.control_time_step

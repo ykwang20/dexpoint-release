@@ -88,3 +88,25 @@ def load_ycb_object_double(scene: sapien.Scene, object_name, scale=1, visual_onl
     else:
         actor = builder.build_static(name=f"{YCB_CLASSES[ycb_id]}_visual")
     return actor
+
+def load_ycb_object(scene: sapien.Scene, object_name, scale=1, visual_only=False, material=None, static=False):
+    ycb_id = INVERSE_YCB_CLASSES[object_name]
+    ycb_name = YCB_CLASSES[ycb_id]
+    visual_file = YCB_ROOT / "visual" / ycb_name / "textured_simple.obj"
+    collision_file = YCB_ROOT / "collision" / ycb_name / "collision.obj"
+    builder = scene.create_actor_builder()
+    scales = np.array([scale] * 3)
+    density = 1000
+    if material is None:
+        material = scene.engine.create_physical_material(1.5, 1, 0.1)
+    if not visual_only:
+        builder.add_multiple_collisions_from_file(str(collision_file), scale=scales, density=density, material=material)
+    if visual_only:
+        visual_file = YCB_ROOT / "visual" / ycb_name / "textured_simple.stl"
+
+    builder.add_visual_from_file(str(visual_file), scale=scales)
+    if not visual_only and not static:
+        actor = builder.build(name=YCB_CLASSES[ycb_id])
+    else:
+        actor = builder.build_static(name=f"{YCB_CLASSES[ycb_id]}_visual")
+    return actor

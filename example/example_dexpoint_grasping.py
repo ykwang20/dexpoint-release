@@ -29,10 +29,10 @@ if __name__ == '__main__':
         environment = AllegroRelocateRLEnv(**env_params)
 
         # Create camera
-        environment.setup_camera_from_config(task_setting.CAMERA_CONFIG["relocate_double"])
+        environment.setup_camera_from_config(task_setting.CAMERA_CONFIG["relocate"])
 
         # Specify observation
-        environment.setup_visual_obs_config(task_setting.OBS_CONFIG["relocate_noise_double"])
+        environment.setup_visual_obs_config(task_setting.OBS_CONFIG["relocate_noise"])
 
         # Specify imagination
         environment.setup_imagination_config(task_setting.IMG_CONFIG["relocate_robot_only"])

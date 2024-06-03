@@ -350,10 +350,10 @@ def main_env():
     from dexpoint2.real_world import task_setting
 
     # Create camera
-    env.setup_camera_from_config(task_setting.CAMERA_CONFIG["relocate"])
+    env.setup_camera_from_config(task_setting.CAMERA_CONFIG["relocate_double"])
 
     # Specify observation
-    env.setup_visual_obs_config(task_setting.OBS_CONFIG["relocate_noise"])
+    env.setup_visual_obs_config(task_setting.OBS_CONFIG["relocate_noise_double"])
     # Specify imagination
     env.setup_imagination_config(task_setting.IMG_CONFIG["relocate_robot_only"])
 
@@ -389,8 +389,7 @@ def main_env():
     viewer.toggle_pause(True)
     pose = env.l_palm_link.get_pose()
     for i in range(5000):
-        action = np.zeros(16)
-        action[0] = 0.03
+        action = np.zeros(44)
         # action[22] =-0.03
         # action[23]=0.04
         obs, reward, done, _ = env.step(action)

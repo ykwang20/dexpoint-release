@@ -113,7 +113,7 @@ if __name__ == '__main__':
             action = policy.predict(observation=obs, deterministic=True)[0]
             print("action",action)
             # action[6:0] = action[6:] - [-0.0,-0.78539815,-0.78539815,-0.78539815,-0.0,-0.78539815,-0.78539815 ,-0.78539815 , -0.0,-0.78539815,-0.78539815,-0.78539815,-0.78539815,-0.78539815,-0.78539815,-0.78539815]
-
+            #action=np.zeros(16)
             obs, reward, done, _ = env.step(action)
             simple_pc.render(obs, is_imitation=True)
             env.render()
