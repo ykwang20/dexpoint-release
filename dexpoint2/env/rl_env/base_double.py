@@ -108,8 +108,11 @@ class BaseDoubleRLEnv(BaseSimulationEnv, gym.Env):
         l_info = generate_arm_robot_hand_info()[self.l_robot_name]
         self.arm_dof = l_info.arm_dof
         hand_dof = l_info.hand_dof
-        velocity_limit = np.array([1] * 3 + [1] * 3 + [np.pi] * hand_dof)
+        limit = 0.1
+        limit_hand = 1
+        velocity_limit = np.array([limit] * 3 + [limit] * 3 + [np.pi*limit_hand] * hand_dof)
         self.velocity_limit = np.stack([-velocity_limit, velocity_limit], axis=1)
+        
         start_joint_name = self.l_robot.get_joints()[1].get_name()
         end_joint_name = self.l_robot.get_active_joints()[self.arm_dof - 1].get_name()
         self.kinematic_model = PartialKinematicModel(self.l_robot, start_joint_name, end_joint_name)
@@ -126,8 +129,6 @@ class BaseDoubleRLEnv(BaseSimulationEnv, gym.Env):
 
         r_info = generate_arm_robot_hand_info()[self.r_robot_name]
         hand_dof = r_info.hand_dof
-        velocity_limit = np.array([1] * 3 + [1] * 3 + [np.pi] * hand_dof)
-        self.velocity_limit = np.stack([-velocity_limit, velocity_limit], axis=1)
         start_joint_name = self.r_robot.get_joints()[1].get_name()
         end_joint_name = self.r_robot.get_active_joints()[self.arm_dof - 1].get_name()
         self.kinematic_model = PartialKinematicModel(self.r_robot, start_joint_name, end_joint_name)
@@ -226,6 +227,14 @@ class BaseDoubleRLEnv(BaseSimulationEnv, gym.Env):
         r_ee_link_new_pose = self.r_ee_link.get_pose()
         r_relative_pos = r_ee_link_new_pose.p - r_ee_link_last_pose.p
         self.r_cartesian_error = np.linalg.norm(r_relative_pos - r_target_root_velocity[:3] * self.control_time_step)
+        # print('l_ee_link_new_pose:',l_ee_link_new_pose)
+        # print('l_relative_pos:',l_relative_pos)
+        # print('l_target_root_velocity:',l_target_root_velocity[:3])
+        # print('l_cartesian_error:',self.l_cartesian_error)
+        # print('r_ee_link_new_pose:',r_ee_link_new_pose)
+        # print('r_relative_pos:',r_relative_pos)
+        # print('r_target_root_velocity:',r_target_root_velocity[:3])
+        # print('r_cartesian_error:',self.r_cartesian_error)
 
     def arm_kinematic_step(self, action: np.ndarray):
         """
