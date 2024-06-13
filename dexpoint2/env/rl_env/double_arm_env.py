@@ -299,7 +299,7 @@ class DoubleAllegroRelocateRLEnv(DoubleLabRelocateEnv, BaseDoubleRLEnv):
             reward += 10 * lift
             if lift > 0.02:
                 self.lift = True
-        reward = reward * 4
+        reward = reward * 4*2
         self.reward_lift_val = reward
         return reward
     
