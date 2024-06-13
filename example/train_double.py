@@ -50,7 +50,7 @@ if __name__ == '__main__':
     parser.add_argument('--task_name', type=str, default="laptop")
     parser.add_argument('--extractor_name', type=str, default="smallpn")
     parser.add_argument('--pretrain_path', type=str, default=None)
-    parser.add_argument('--save_freq', type=int, default=10)
+    parser.add_argument('--save_freq', type=int, default=50)
     parser.add_argument('--save_path', type=str, default=SAVE_DIR)
     parser.add_argument('--eigen_dim', type=int, default=None)
     args = parser.parse_args()
@@ -73,6 +73,8 @@ if __name__ == '__main__':
         use_visual_obs = True
         object_name='any_train'
         object_category="02876657"
+        # object_name="potted_meat_can"
+        # object_category="YCB"
         robot_name = "xarm7_allegro_v2"
         env_params = dict(robot_name=robot_name, 
                           object_name=object_name,
@@ -107,6 +109,7 @@ if __name__ == '__main__':
                 target_kl=0.2,
                 tensorboard_log="./logs/double/dex"+action_dim+"/"
                 )
+    #model = PPO.load("/home/yikai/dexpoint-release/assets/checkpoints/20240604-0715/model_850.zip",check_obs_space=False, env=env,tensorboard_log="./logs/double/dex"+action_dim+"/")
     print('policy net:',model.policy)
     if pretrain_path is not None:
         state_dict: OrderedDict = torch.load(pretrain_path)

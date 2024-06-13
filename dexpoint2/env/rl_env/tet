@@ -1,0 +1,52 @@
+def reward_finger_object_dis(self, action):
+        reward = 0.0
+        if self.palm_in_object_val < 0.10:
+            finger_object_dist = np.linalg.norm(self.object_in_tip, axis=1, keepdims=False)
+            reward = np.sum(1.0 / (0.01 + finger_object_dist) * self.finger_reward_scale)
+        return reward
+    
+    def reward_palm_object_dis(self, action):
+        reward = 0.0
+        palm_in_object = np.linalg.norm(self.palm_in_object)
+        reward = np.sum(1.0 / (0.01 + palm_in_object) * 0.05)
+        return reward
+    
+    def reward_hand_action(self, action):
+        reward = 0.0
+        hand_action = self.hand_action
+        if self.palm_in_object_val < 0.10:
+            reward += 0.5 * (np.sum(hand_action) - np.sum(hand_action[6:9]))
+            for i in range(12):
+                if i == 6 or i==7 or i==8 :
+                    continue
+                if hand_action[i] < 0.25 :
+                    reward -=  2 * (0.25-hand_action[i])
+        else :
+            reward -= 1 * np.sum(hand_action)
+        return reward
+    
+    def reward_contact_and_lift(self):
+        reward = 0.0
+        if np.sum(self.robot_object_contact) >= 1:
+            reward += 0.5 * np.clip(np.sum(self.robot_object_contact), 0, 3)
+        if np.sum(self.robot_object_contact) >= 2:
+            lift = np.clip(self.object_lift, 0, 0.2) #self.object_lift是物体被抬起的高度
+            reward += 20 * lift
+        return reward
+
+ def reward_target_obj_dis(self):
+        reward = 0.0
+        if self.lift:
+            reward = 1
+            target_obj_dist = np.linalg.norm(self.target_in_object)
+            reward += 1.0 / (0.04 + target_obj_dist)
+        return reward
+    
+  def reward_other(self, action):
+        reward = 0.0
+        qvel = self.robot.get_qvel()
+        #print('robot vel:', qvel.shape)
+        #前7维是机械臂的速度，后16维是灵巧手关节速度
+        reward += np.sum(np.clip(qvel[:7], -1, 1) ** 2) * -0.1
+        reward += np.sum(np.clip(qvel[7:], -1, 1) ** 2) * -0.01
+        return reward
