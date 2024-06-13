@@ -3,6 +3,8 @@ import random
 import torch.nn as nn
 import numpy as np
 import time
+from sapien.utils import Viewer
+
 
 import argparse
 from dexpoint2.env.rl_env.relocate_env import AllegroRelocateRLEnv
@@ -72,75 +74,39 @@ if __name__ == '__main__':
     parser.add_argument('--task_name', type=str, default="allegro_hand_xarm7")
     parser.add_argument('--extractor_name', type=str, default="smallpn")
     parser.add_argument('--pretrain_path', type=str, default="20240425-1907")
-    parser.add_argument('--model_path', type=str, default="531_double.zip")
+    parser.add_argument('--model_path', type=str, default="614_2*.zip")
     parser.add_argument('--horizon', type=str, default="200")
     parser.add_argument('--eigen_dim', type=int, default=2)
     args = parser.parse_args()
 
     task_name = args.task_name
-    extractor_name = args.extractor_name
-    seed = args.seed if args.seed >= 0 else random.randint(0, 100000)
-    pretrain_path = args.pretrain_path
-    horizon = 200
-    env_iter = args.iter * horizon * args.n
-    print(f"freeze: {args.freeze}")
+    args.seed = args.seed if args.seed >= 0 else random.randint(0, 100000)
+    args.dir = os.path.join(os.path.dirname(__file__), '..')
+    args.pretrain_path = os.path.join(
+        args.dir, 'assets/checkpoints/',  args.model_path)
+
+    env = create_env_fn()
 
     
-    
-
-    def create_env_fn():
-        object_names = ["mustard_bottle", "tomato_soup_can", "potted_meat_can"]
-        object_name = np.random.choice(object_names)
-        rotation_reward_weight = 0  # whether to match the orientation of the goal pose
-        use_visual_obs = True
-        # object_name='any_train'
-        # object_category="02876657"
-        env_params = dict(robot_name="allegro_hand_xarm7",object_name=object_name, rotation_reward_weight=rotation_reward_weight,
-                          randomness_scale=1, use_visual_obs=use_visual_obs, use_gui=True,
-                          no_rgb=True)
-
-        # If a computing device is provided, designate the rendering device.
-        # On a multi-GPU machine, this sets the rendering GPU and RL training GPU to be the same,
-        # based on "CUDA_VISIBLE_DEVICES".
-        if "CUDA_VISIBLE_DEVICES" in os.environ:
-            env_params["device"] = "cuda"
-        environment = AllegroRelocateRLEnv(**env_params)
-
-        # Create camera
-        environment.setup_camera_from_config(task_setting.CAMERA_CONFIG["relocate"])
-
-        # Specify observation
-        environment.setup_visual_obs_config(task_setting.OBS_CONFIG["relocate_noise"])
-
-        # Specify imagination
-        environment.setup_imagination_config(task_setting.IMG_CONFIG["relocate_robot_only"])
-        return environment
-
-
-    # def create_eval_env_fn():
-    #     unseen_indeces = TRAIN_CONFIG[task_name]['unseen']
-    #     environment = create_env(task_name=task_name,
-    #                              use_visual_obs=True,
-    #                              use_gui=False,
-    #                              is_eval=True,
-    #                              pc_noise=True,
-    #                              index=unseen_indeces,
-    #                              img_type='robot',
-    #                              rand_pos=rand_pos,
-    #                              rand_degree=rand_degree)
-    #     return environment
-
-
-    #env = SubprocVecEnv([create_env_fn] * args.workers, "spawn")  # train on a list of envs.
-    env=create_env_fn()
-
-    checkpoint_path='/home/wyk/Dex/dexpoint-release/assets/checkpoints/model_667.zip'
-    print(f"checkpoint_path: {checkpoint_path}")
-    policy = PPO.load(checkpoint_path, env, 'cuda',
-                      policy_kwargs=get_3d_policy_kwargs(extractor_name=extractor_name),
-                      check_obs_space=False, force_load=True)
+    policy = PPO.load(args.pretrain_path,
+                      env,
+                      'cuda',
+                      policy_kwargs=get_3d_policy_kwargs(
+                          extractor_name=args.extractor_name),
+                      check_obs_space=False,
+                      force_load=True)
     print("Policy loaded")
     simple_pc = SimplePointCloud()
+
+    viewer = Viewer(env.renderer)
+    viewer.set_scene(env.scene)
+    env.viewer = viewer
+
+    
+
+    env.reset()
+    # env.reset_env()
+    viewer.toggle_pause(True)
 
     while True:
         print('obs space:', env.observation_space)
@@ -160,11 +126,17 @@ if __name__ == '__main__':
             action = policy.predict(observation=obs, deterministic=True)[0]
             print("action",action)
             # action[6:0] = action[6:] - [-0.0,-0.78539815,-0.78539815,-0.78539815,-0.0,-0.78539815,-0.78539815 ,-0.78539815 , -0.0,-0.78539815,-0.78539815,-0.78539815,-0.78539815,-0.78539815,-0.78539815,-0.78539815]
-            #action=np.zeros(16)
+
+            action[6]=0
+            action[7]=1
+            action[14]=0
+            action[15]=1
             obs, reward, done, _ = env.step(action)
             simple_pc.render(obs, is_imitation=True)
             env.render()
+            
             time.sleep(0.05)
             if done:
                 break
+
     simple_pc.vis.destroy_window()

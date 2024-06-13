@@ -84,13 +84,15 @@ class DoubleLabRelocateEnv(BaseSimulationEnv):
             orientation = YCB_ORIENTATION[self.object_name]
         else:
             orientation = np.array([1, 0, 0, 0])
+        if pos[0]<0:
+            pos[0]=0
         position = np.array([pos[0], pos[1], self.object_height])
         pose = sapien.Pose(position, orientation)
         return pose
 
     def generate_random_target_pose(self, randomness_scale):
         pos = self.np_random.uniform(low=-0.1, high=0.1, size=2) * randomness_scale
-        height = 0.25
+        height = 0.4
         position = np.array([pos[0], pos[1], height])
         # No randomness for the orientation. Keep the canonical orientation.
         if self.object_category == "ycb":

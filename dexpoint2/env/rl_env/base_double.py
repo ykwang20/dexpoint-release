@@ -168,6 +168,7 @@ class BaseDoubleRLEnv(BaseSimulationEnv, gym.Env):
         #l_hand_qpos = recover_action(l_action[6:], self.l_robot.get_qlimits()[self.arm_dof:])
         if self.eigen_dim is not None:
             l_hand_qpos= self.executor.compute_grasp(l_action[6:])
+            l_hand_qpos[12]=-1
         else:
             print('l_action:',l_action)
             for i in range(16):
@@ -197,6 +198,7 @@ class BaseDoubleRLEnv(BaseSimulationEnv, gym.Env):
         #r_hand_qpos = np.clip(r_action[6:], self.r_robot.get_qlimits()[self.arm_dof:][:, 0], self.r_robot.get_qlimits()[self.arm_dof:][:, 1])
         if self.eigen_dim is not None:
             r_hand_qpos= self.executor.compute_grasp(r_action[6:])
+            r_hand_qpos[12]=-1
         else:
             for i in range(16):
                 r_action[i+6] *= 2

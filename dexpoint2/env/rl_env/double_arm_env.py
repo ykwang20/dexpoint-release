@@ -275,7 +275,7 @@ class DoubleAllegroRelocateRLEnv(DoubleLabRelocateEnv, BaseDoubleRLEnv):
     
     def reward_l_contact(self, action):
         reward = 0.0
-        if np.sum(self.l_robot_object_contact) >= 1:
+        if np.sum(self.l_robot_object_contact) >= 2:
             reward += 0.25 * np.clip(np.sum(self.l_robot_object_contact), 0, 3)
         reward = reward * 2
         self.reward_l_contact_val = reward
@@ -283,7 +283,7 @@ class DoubleAllegroRelocateRLEnv(DoubleLabRelocateEnv, BaseDoubleRLEnv):
     
     def reward_r_contact(self, action):
         reward = 0.0
-        if np.sum(self.r_robot_object_contact) >= 1:
+        if np.sum(self.r_robot_object_contact) >= 2:
             reward += 0.25 * np.clip(np.sum(self.r_robot_object_contact), 0, 3)
         reward = reward * 2
         self.reward_r_contact_val = reward
